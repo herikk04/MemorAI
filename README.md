@@ -91,7 +91,7 @@ Uma plataforma de ensino baseada na metodologia da Curva do Esquecimento de Ebbi
   │
   ├── 📂 docs/ - Documentação do projeto
   │ ├── 📄 architecture.md - Estrutura técnica do projeto
-  │ ├── 📄 metodologia.md - Metodologia de ensino utilizada
+  │ ├── 📄 methodology.md - Metodologia de ensino utilizada
   │ ├── 📂 api/ - Documentação da API (caso necessário)
   │
   ├── 📂 design/ - Protótipos e wireframes
