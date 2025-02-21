@@ -90,7 +90,7 @@ Uma plataforma de ensino baseada na metodologia da Curva do Esquecimento de Ebbi
   ├── 📄 LICENSE - Licença de código aberto
   │
   ├── 📂 docs/ - Documentação do projeto
-  │ ├── 📄 arquitetura.md - Estrutura técnica do projeto
+  │ ├── 📄 architecture.md - Estrutura técnica do projeto
   │ ├── 📄 metodologia.md - Metodologia de ensino utilizada
   │ ├── 📂 api/ - Documentação da API (caso necessário)
   │
