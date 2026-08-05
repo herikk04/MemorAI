@@ -12,7 +12,7 @@ __pycache__/
 
 .env
 .DS_Store
-
+node_modules/
 media/
 
 frontend/node_modules/
