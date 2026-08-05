@@ -1,11 +1,12 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path, include
-from .views import DeckViewSet, CardViewSet
+from django.urls import include, path
+
+from .views import CardViewSet, DeckViewSet
 
 router = DefaultRouter()
-router.register(r'decks', DeckViewSet, basename='deck')
-router.register(r'cards', CardViewSet, basename='card')
+router.register(r"decks", DeckViewSet, basename="deck")
+router.register(r"cards", CardViewSet, basename="card")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
