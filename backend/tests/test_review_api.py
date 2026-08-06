@@ -17,11 +17,11 @@ def _url(card_id):
 class ReviewEndpointTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.deck = Deck.objects.create(name="Python")
-        self.card = Card.objects.create(deck=self.deck, front="list?", back="[]")
         self.user = get_user_model().objects.create_user(
             username="u", password="pw1234567"
         )
+        self.deck = Deck.objects.create(name="Python", owner=self.user)
+        self.card = Card.objects.create(deck=self.deck, front="list?", back="[]")
         self.client.force_authenticate(self.user)
 
     def test_review_good_advances_srs(self):
@@ -68,23 +68,36 @@ class ReviewEndpointTests(APITestCase):
         resp = self.client.post(_url(self.card.id), {"time_ms": 100})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_review_anonymous_user_still_works(self):
-        # If no auth is wired yet, the endpoint should still record a Review
-        # with user=None (the SDD explicitly keeps the FK nullable for now).
+    def test_unauthenticated_request_rejected(self):
         self.client.force_authenticate(None)
-        resp = self.client.post(_url(self.card.id), {"rating": Review.Rating.EASY})
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.card.refresh_from_db()
-        # FSRS first Easy seeds a 2-day interval
-        self.assertEqual(self.card.interval, 2.0)
-        review = Review.objects.get(card=self.card)
-        self.assertIsNone(review.user)
+        resp = self.client.post(
+            _url(self.card.id), {"rating": Review.Rating.EASY}, format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_review_on_foreign_deck_returns_404(self):
+        # Ownership scoping (Sprint 1.5): a card owned by another user is
+        # invisible to the requester, so Django treats it as not found.
+        other = get_user_model().objects.create_user(
+            username="other", password="pw1234567"
+        )
+        other_deck = Deck.objects.create(name="alien", owner=other)
+        other_card = Card.objects.create(
+            deck=other_deck, front="x", back="y"
+        )
+        resp = self.client.post(
+            _url(other_card.id), {"rating": Review.Rating.GOOD}, format="json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class DueEndpointTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.deck = Deck.objects.create(name="d")
+        self.user = get_user_model().objects.create_user(
+            username="due", password="pw1234567"
+        )
+        self.deck = Deck.objects.create(name="d", owner=self.user)
         self.card_due = Card.objects.create(deck=self.deck, front="a", back="b")
         # Force it overdue by persisting a past due date directly.
         from django.utils import timezone
@@ -94,6 +107,7 @@ class DueEndpointTests(APITestCase):
         from datetime import timedelta
         self.card_future.due = timezone.now() + timedelta(days=5)
         self.card_future.save(update_fields=["due"])
+        self.client.force_authenticate(self.user)
 
     def test_due_lists_only_overdue(self):
         resp = self.client.get("/api/v1/cards/due/")
@@ -101,3 +115,17 @@ class DueEndpointTests(APITestCase):
         ids = [c["id"] for c in resp.data]
         self.assertIn(self.card_due.id, ids)
         self.assertNotIn(self.card_future.id, ids)
+
+    def test_due_excludes_cards_owned_by_other_users(self):
+        # Sprint 1.5 ownership scoping via deck__owner.
+        other = get_user_model().objects.create_user(
+            username="other-due", password="pw1234567"
+        )
+        other_deck = Deck.objects.create(name="other-d", owner=other)
+        other_card = Card.objects.create(deck=other_deck, front="x", back="y")
+        from django.utils import timezone
+        other_card.due = timezone.now()
+        other_card.save(update_fields=["due"])
+        resp = self.client.get("/api/v1/cards/due/")
+        ids = [c["id"] for c in resp.data]
+        self.assertNotIn(other_card.id, ids)

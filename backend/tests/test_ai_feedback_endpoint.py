@@ -12,6 +12,12 @@ class FeedbackEndpointTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = "/api/v1/ai/feedback/"
+        # Sprint 1.5: all AI endpoints require an authenticated user.
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username="ai-endpoint", password="pw1234567"
+        )
+        self.client.force_authenticate(self.user)
 
     def test_happy_path(self):
         events_before = AIEvent.objects.count()
@@ -50,18 +56,24 @@ class FeedbackEndpointTests(APITestCase):
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_unauthenticated_request_rejected(self):
+        self.client.force_authenticate(None)
+        resp = self.client.post(
+            self.url,
+            {"front": "q", "back": "a", "rating": 3},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_authenticated_user_updates_usage(self):
-        User = get_user_model()
-        u = User.objects.create_user(username="ai-endpoint", password="pw1234567")
-        self.client.force_authenticate(u)
         from apps.ai.models import AIUsage
 
-        before = AIUsage.objects.filter(user=u).count()
+        before = AIUsage.objects.filter(user=self.user).count()
         resp = self.client.post(
             self.url,
             {"front": "q", "back": "a", "rating": 3},
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        after = AIUsage.objects.filter(user=u).count()
+        after = AIUsage.objects.filter(user=self.user).count()
         self.assertEqual(after, before + 1)

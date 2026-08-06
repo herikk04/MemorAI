@@ -212,6 +212,7 @@ class TestAnalyticsEndpoints:
     def test_task_result_polling(self, user, deck, client):
         card = make_card(deck, due_in=300, lapses=1, reps=1)
         Review.objects.create(card=card, user=user, rating=3)
+        client.force_authenticate(user)
         task = generate_report_task.delay(user.id, "pt")
         resp = client.get(f"/api/v1/ai/tasks/{task.id}/")
         assert resp.status_code == status.HTTP_200_OK
@@ -219,7 +220,25 @@ class TestAnalyticsEndpoints:
         assert body["result"]["metrics"]["total_reviews"] == 1
 
     @pytest.mark.django_db
-    def test_unknown_task_id_returns_pending(self, client):
+    def test_unknown_task_id_returns_pending(self, user, client):
+        client.force_authenticate(user)
         resp = client.get("/api/v1/ai/tasks/00000000-0000-0000-0000-000000000000/")
         assert resp.status_code == status.HTTP_202_ACCEPTED
         assert resp.json()["status"] in ("PENDING", "FAILURE")
+
+    @pytest.mark.django_db
+    def test_unauthenticated_task_result_returns_401(self, client):
+        resp = client.get("/api/v1/ai/tasks/00000000-0000-0000-0000-000000000000/")
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.mark.django_db
+    def test_unauthenticated_report_endpoint_returns_401(self, client):
+        resp = client.get("/api/v1/ai/report/")
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.mark.django_db
+    def test_unauthenticated_suggestions_endpoint_returns_401(self, client):
+        resp = client.post(
+            "/api/v1/ai/suggestions/", {"top_k": 5}, format="json"
+        )
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED

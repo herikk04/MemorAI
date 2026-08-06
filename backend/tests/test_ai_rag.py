@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -95,6 +96,12 @@ class TestSearchEndpoint(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = "/api/v1/ai/search/"
+        # Sprint 1.5: IsAuthenticated default.
+        User = get_user_model()
+        self.user = User.objects.create_user(
+            username="searcher", password="pw1234567"
+        )
+        self.client.force_authenticate(self.user)
 
     @pytest.mark.django_db
     def test_happy_path(self):
@@ -124,3 +131,10 @@ class TestSearchEndpoint(APITestCase):
             format="json",
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_unauthenticated_request_rejected(self):
+        self.client.force_authenticate(None)
+        resp = self.client.post(
+            self.url, {"query": "q", "top_k": 5}, format="json"
+        )
+        assert resp.status_code == status.HTTP_401_UNAUTHORIZED

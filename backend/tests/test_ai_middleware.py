@@ -17,10 +17,13 @@ class FeedbackQuotaMiddlewareTests(APITestCase):
         self.url = "/api/v1/ai/feedback/"
         self.payload = {"front": "q", "back": "a", "rating": 3}
 
-    def test_anonymous_passes_through(self):
+    def test_unauthenticated_returns_401(self):
+        # Sprint 1.5: AI endpoints now require an authenticated user
+        # (DEFAULT_PERMISSION_CLASSES = IsAuthenticated). This replaces the
+        # old AllowAny pass-through path; the quota middleware still only
+        # fires once the user is authenticated.
         resp = self.client.post(self.url, self.payload, format="json")
-        # Mock provider will run and return 200.
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_authenticated_normal_quota_returns_200(self):
         User = get_user_model()
