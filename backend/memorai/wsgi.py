@@ -8,8 +8,15 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
 import os
+import sys
 
-from django.core.wsgi import get_wsgi_application
+# Make backend/apps/ importable as a top-level namespace.
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APPS_DIR = os.path.join(BACKEND_DIR, "apps")
+if APPS_DIR not in sys.path:
+    sys.path.insert(0, APPS_DIR)
+
+from django.core.wsgi import get_wsgi_application  # noqa: E402
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'memorai.settings.dev')
 
