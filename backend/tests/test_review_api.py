@@ -41,7 +41,11 @@ class ReviewEndpointTests(APITestCase):
         self.assertEqual(review.rating, Review.Rating.GOOD)
         self.assertEqual(review.time_ms, 4200)
         self.assertEqual(review.user, self.user)
-        self.assertEqual(review.feedback_source, "heuristic")
+        # Sprint 2 wired the AI feedback flow. With the mock provider the
+        # flow returns status="success", so feedback_source is "ai:feedback"
+        # and there is non-empty text from the mock client.
+        self.assertEqual(review.feedback_source, "ai:feedback")
+        self.assertTrue(review.feedback_text)
 
     def test_review_again_lapses(self):
         # Advance once so lapsed state is meaningful

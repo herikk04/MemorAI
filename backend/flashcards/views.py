@@ -1,3 +1,5 @@
+import logging
+
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -11,6 +13,8 @@ from .serializers import (
     ReviewSerializer,
 )
 from .services.scheduler import schedule_review
+
+logger = logging.getLogger("flashcards.review")
 
 
 class DeckViewSet(viewsets.ModelViewSet):
@@ -27,9 +31,15 @@ class CardViewSet(viewsets.ModelViewSet):
         """POST /api/v1/cards/{id}/review/
 
         Records a Review, advances the card's SRS state via the scheduler,
-        and returns the new card state + the created review.
+        attaches an AI-generated explanation to the Review (Sprint 2) and
+        returns the new card state + the created review.
 
         Body: {"rating": 1|2|3|4, "time_ms"?: int}
+
+        The AI feedback is best-effort. Per the SDD (sec 3.2) the AI never
+        blocks the UX: if the LLM is unavailable or fails, the response
+        still carries the new SRS state plus a heuristic explanation, and
+        the Review.feedback_source records where the text came from.
         """
         card = self.get_object()
         in_serializer = ReviewCreateSerializer(data=request.data)
@@ -57,14 +67,42 @@ class CardViewSet(viewsets.ModelViewSet):
             ]
         )
 
-        # Audit history + pluggable slot for AI feedback (Sprint 2).
+        # AI feedback (best-effort). Lazy import keeps the boundary one-way:
+        # flashcards depends on orchestrator, never on prompts or clients.
+        feedback_text = ""
+        feedback_source = "heuristic"
+        try:
+            from apps.ai.services.orchestrator import run_flow
+
+            result = run_flow(
+                "feedback",
+                {
+                    "front": card.front,
+                    "back": card.back,
+                    "rating": rating,
+                    "time_ms": time_ms,
+                    "reps": update.reps,
+                    "lapses": update.lapses,
+                },
+                language="pt",
+                user=request.user if request.user.is_authenticated else None,
+            )
+            feedback_text = result.text
+            feedback_source = (
+                "ai:feedback"
+                if result.status == "success"
+                else f"ai:{result.status}"
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("AI feedback failed; falling back to heuristic: %s", exc)
+
         review = Review.objects.create(
             card=card,
             user=request.user if request.user.is_authenticated else None,
             rating=rating,
             time_ms=time_ms,
-            feedback_text="",            # populated by AI orchestrator in Sprint 2
-            feedback_source="heuristic", # overwritten when AI feedback is attached
+            feedback_text=feedback_text,
+            feedback_source=feedback_source,
         )
 
         return Response(
