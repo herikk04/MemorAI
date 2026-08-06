@@ -80,6 +80,14 @@ else:
         }
     }
 
+# Register pgvector app only when running against PostgreSQL. On SQLite
+# (the dev default and the test DB, both via in-memory SQLite) pgvector's
+# VectorField would error at migration time; we fall back to a JSON-backed
+# plain list there via _vector_field_cls() in apps.ai.models so the same
+# code path works on both DBs.
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    INSTALLED_APPS.append("pgvector.django")
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

@@ -2,19 +2,54 @@
 
 AIEvent: audit log of every LLM call (tokens, cost, latency, status).
 AIUsage: per-(user, day) aggregate of tokens/cost used to enforce quotas.
+Embedding: vector + metadata for cards/decks so RAG flows can do semantic
+   search. Uses pgvector when running on PostgreSQL (with HNSW index for
+   fast cosine similarity); falls back to a JSON list when on SQLite
+   (dev/test) since pgvector needs the Postgres extension.
 
 Design notes:
 - We deliberately do NOT store raw prompt payloads or full completion text in
   AIEvent by default. The `prompt_hash` field lets us correlate repeated calls
   without persisting user content, preserving privacy. If the flow opts in
-  (AuditConfig.keep_payload=True), the payload goes into a JSON field — but the
-  guardrails layer (safety/) is responsible for scrubbing PII before that.
+  (AuditConfig.keep_payload=True), the payload goes into a JSON field -- but
+  the guardrails layer (safety/) is responsible for scrubbing PII before that.
 - Cost is stored as a Decimal (USD) to avoid float drift on running totals.
+- The Embedding.vector field stores dimensionality from AI_CONFIG["embedding_dim"]
+  (default 1536 for text-embedding-3-small); changing it later requires migrating
+  existing rows.
 """
 from decimal import Decimal
 
+from django.apps import apps as django_apps
 from django.conf import settings
-from django.db import models
+from django.db import connection, models
+
+
+def _is_postgres() -> bool:
+    """Detect at runtime whether the default DB engine is PostgreSQL.
+
+    Cheap to call (reads connection.vendor). Used to switch the vector field
+    type and to skip creating the ivfflat/hnsw index on SQLite.
+    """
+    try:
+        return connection.vendor == "postgresql"
+    except Exception:
+        return False
+
+
+def _vector_field_cls():
+    """Return VectorField (pgvector) on PostgreSQL, JSONField on others.
+
+    pgvector.django.VectorField requires the pgvector Postgres extension and
+    the pgvector.django app in INSTALLED_APPS, both gated to Postgres in
+    settings/base.py. On SQLite we store the embedding as a plain JSON list of
+    floats so the same flow code can run in dev and tests.
+    """
+    if _is_postgres():
+        from pgvector.django import VectorField
+
+        return VectorField
+    return models.JSONField
 
 
 class AIEvent(models.Model):
@@ -90,3 +125,61 @@ class AIUsage(models.Model):
                 getattr(settings, "AI_CONFIG", {}).get("daily_cost_cap_usd", 10.0)
             ),
         }
+
+
+class Embedding(models.Model):
+    """Vector + metadata for a card/deck so RAG flows can do semantic search.
+
+    The vector column is a pgvector VectorField on Postgres (with HNSW index)
+    and a plain JSON list on SQLite (dev/test), chosen at migration time via
+    _vector_field_cls(). The Dim, model and version let us coordinate
+    re-embeddings across the codebase dims; if AI_CONFIG changes, old rows
+    keep their dim and dim/model so search can coalesce them.
+    """
+
+    class EntityType(models.TextChoices):
+        CARD = "card", "Card"
+        DECK = "deck", "Deck"
+
+    entity_type = models.CharField(max_length=8, choices=EntityType.choices)
+    entity_id = models.PositiveIntegerField()
+    vector = _vector_field_cls()()
+    model = models.CharField(max_length=64, default="")
+    version = models.CharField(max_length=16, default="")
+    dim = models.PositiveIntegerField(default=1536)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["entity_type", "entity_id"]),
+            models.Index(fields=["model", "version"]),
+        ]
+        # One vector per (entity_type, entity_id, model, version) so
+        # re-embedding with a new model doesn't overwrite the old rows.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["entity_type", "entity_id", "model", "version"],
+                name="unique_embedding_per_entity_model_version",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Embedding({self.entity_type}:{self.entity_id} dim={self.dim})"
+
+    @classmethod
+    def active_dim(cls) -> int:
+        return getattr(settings, "AI_CONFIG", {}).get("embedding_dim", 1536)
+
+    @classmethod
+    def active_model(cls) -> str:
+        return getattr(settings, "AI_CONFIG", {}).get(
+            "embedding_model", "text-embedding-3-small"
+        )
+
+
+# Silence the unused-import warning for django_apps in linters; it is imported
+# intentionally because pgvector.django must be a ready app before VectorField
+# columns can be created, and importing apps here keeps the dependency explicit
+# for readers tracing why the conditional registration matters.
+_ = django_apps

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AIEvent, AIUsage
+from .models import AIEvent, AIUsage, Embedding
 
 
 @admin.register(AIEvent)
@@ -17,3 +17,11 @@ class AIUsageAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "day", "calls", "tokens_in", "tokens_out", "cost_usd")
     list_filter = ("day",)
     date_hierarchy = "day"
+
+
+@admin.register(Embedding)
+class EmbeddingAdmin(admin.ModelAdmin):
+    list_display = ("id", "entity_type", "entity_id", "model", "version", "dim", "updated_at")
+    list_filter = ("entity_type", "model", "version")
+    search_fields = ("entity_id",)
+    date_hierarchy = "updated_at"
