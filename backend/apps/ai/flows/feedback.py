@@ -80,6 +80,21 @@ def run_feedback(
     }
     loaded = load_prompt("feedback", language, prompt_payload)
 
+    # Guardrails: mask PII-like content before it reaches the provider.
+    # Sanitise against the user-visible fields; the rating/reps/lapses are
+    # numeric and never require masking.
+    from ..safety import sanitize_inputs
+
+    safe_payload = sanitize_inputs(
+        {"front": prompt_payload["front"], "back": prompt_payload["back"]}
+    )
+    if safe_payload["front"] != prompt_payload["front"] or safe_payload["back"] != prompt_payload["back"]:
+        logger.info("feedback flow masked PII in card %s", payload.get("card_id", "?"))
+        # Re-render the user message with sanitised content so the LLM
+        # never sees the raw email/card/phone.
+        prompt_payload = {**prompt_payload, **safe_payload}
+        loaded = load_prompt("feedback", language, prompt_payload)
+
     try:
         client = get_llm_client()
         llm_resp: LLMResponse = client.complete(

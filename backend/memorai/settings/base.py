@@ -146,3 +146,25 @@ if env("CELERY_BROKER_URL"):
 else:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
+
+
+# Logging: apps.ai logs at INFO without leaking API keys. The default handler
+# does not print full prompt payloads (only flow names and metadata). DEBUG
+# is only on in dev (see dev.py); prod keeps it at INFO or higher.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {"format": "%(asctime)s %(levelname)s %(name)s: %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+    "loggers": {
+        "apps.ai": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "flashcards": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}

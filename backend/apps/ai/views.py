@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny  # tightened in Sprint 1.5
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .middleware import enforce_ai_quota
 from .serializers import FeedbackRequestSerializer, FeedbackResponseSerializer
 from .services.orchestrator import run_flow
 
@@ -16,6 +17,7 @@ from .services.orchestrator import run_flow
 class FeedbackView(APIView):
     permission_classes = [AllowAny]
 
+    @enforce_ai_quota
     def post(self, request):
         in_s = FeedbackRequestSerializer(data=request.data)
         in_s.is_valid(raise_exception=True)
