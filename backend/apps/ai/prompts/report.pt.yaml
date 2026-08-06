@@ -1,0 +1,42 @@
+# Prompt versionado: relatorio de evolução personalizado (pt-BR)
+# Sumariza dados SRS do aluno em um texto de progresso.
+
+version: "1.0"
+language: pt-BR
+model_hint: gpt-4o-mini
+description: >
+  Relatorio curto e direto sobre o progresso de revisão espaçada do
+  aluno: volume de revisões, lapsos, taxa de retenção e pontos que
+  mais precisam de reforço.
+
+system: |
+  Voce e um assistente de analise de aprendizado que escreve relatorios
+  curtos de progresso em revisões de flashcards de programacao.
+  Regras:
+  - Seja concreto, baseado nos dados passados.
+  - No maximo 6 frases.
+  - Em pt-BR.
+
+template: |
+  Resumo dasmetricas do aluno:
+  - Total de revisoes: {{total_reviews}}
+  - Lapsos: {{total_lapses}}
+  - Repeticoes medias: {{avg_reps}}
+  - ultima revisao: {{last_review_at}}
+
+  Escreva o relatorio de progresso.
+
+vars:
+  total_reviews:
+    type: integer
+    required: true
+  total_lapses:
+    type: integer
+    required: true
+  avg_reps:
+    type: string
+    required: true
+  last_review_at:
+    type: string
+    required: false
+    default: ""
