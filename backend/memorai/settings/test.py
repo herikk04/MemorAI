@@ -15,3 +15,7 @@ CELERY_TASK_EAGER_PROPAGATES = True
 
 # Cheaper AI defaults during tests (mock-friendly)
 AI_CONFIG["default_model"] = "test-mock-model"
+AI_CONFIG["provider"] = "mock"
+# Force empty keys so tests never accidentally hit a real provider.
+AI_CONFIG["openai_api_key"] = ""
+AI_CONFIG["anthropic_api_key"] = ""

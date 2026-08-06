@@ -113,6 +113,13 @@ AI_CONFIG = {
     "embedding_dim": env.int("EMBEDDING_DIM", default=1536),
     "daily_token_cap_per_user": env.int("AI_DAILY_TOKEN_CAP_PER_USER", default=200000),
     "daily_cost_cap_usd": env.float("AI_DAILY_COST_CAP_USD", default=10.0),
+    # Provider keys (read lazily; never logged). Defaults empty so the factory
+    # picks MockLLMClient when nothing is configured (dev/test safe fallback).
+    "openai_api_key": env("OPENAI_API_KEY", default=""),
+    "anthropic_api_key": env("ANTHROPIC_API_KEY", default=""),
+    "azure_openai_endpoint": env("AZURE_OPENAI_ENDPOINT", default=""),
+    "azure_openai_api_key": env("AZURE_OPENAI_API_KEY", default=""),
+    "ollama_base_url": env("OLLAMA_BASE_URL", default=""),
 }
 
 # Cache (Redis if available, else local memory)
