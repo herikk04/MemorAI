@@ -32,10 +32,13 @@ class CardSerializer(serializers.ModelSerializer):
 
 class DeckSerializer(serializers.ModelSerializer):
     cards = CardSerializer(many=True, read_only=True)
+    # Owner is auto-assigned from the authenticated request; reading it
+    # lets the SPA identify "my decks" without an extra fetch.
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Deck
-        fields = ["id", "name", "description", "cards"]
+        fields = ["id", "name", "description", "owner", "cards"]
 
 
 class ReviewCreateSerializer(serializers.Serializer):

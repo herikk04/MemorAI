@@ -18,13 +18,40 @@ logger = logging.getLogger("flashcards.review")
 
 
 class DeckViewSet(viewsets.ModelViewSet):
-    queryset = Deck.objects.all()
+    """CRUD for decks, scoped by owner (Sprint 1.5).
+
+    Regular users see and mutate only their own decks; staff users see
+    every deck for administration. Ownership is enforced in
+    ``perform_create`` so deck.* endpoints set the owner from the
+    authenticated request.
+    """
+
     serializer_class = DeckSerializer
+
+    def get_queryset(self):
+        qs = Deck.objects.all()
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class CardViewSet(viewsets.ModelViewSet):
-    queryset = Card.objects.all()
+    """CRUD for cards, scoped by deck owner (Sprint 1.5).
+
+    Cards inherit visibility from the deck they belong to, so the
+    queryset is scoped through ``deck__owner``.
+    """
+
     serializer_class = CardSerializer
+
+    def get_queryset(self):
+        qs = Card.objects.all()
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(deck__owner=self.request.user)
 
     @action(detail=True, methods=["post"], url_path="review")
     def review(self, request, pk=None):
@@ -35,6 +62,9 @@ class CardViewSet(viewsets.ModelViewSet):
         returns the new card state + the created review.
 
         Body: {"rating": 1|2|3|4, "time_ms"?: int}
+
+        Requires an authenticated user (Sprint 1.5). The user FK on
+        Review is set from request.user and never null here.
 
         The AI feedback is best-effort. Per the SDD (sec 3.2) the AI never
         blocks the UX: if the LLM is unavailable or fails, the response
@@ -85,7 +115,7 @@ class CardViewSet(viewsets.ModelViewSet):
                     "lapses": update.lapses,
                 },
                 language="pt",
-                user=request.user if request.user.is_authenticated else None,
+                user=request.user,
             )
             feedback_text = result.text
             feedback_source = (
@@ -98,7 +128,7 @@ class CardViewSet(viewsets.ModelViewSet):
 
         review = Review.objects.create(
             card=card,
-            user=request.user if request.user.is_authenticated else None,
+            user=request.user,
             rating=rating,
             time_ms=time_ms,
             feedback_text=feedback_text,

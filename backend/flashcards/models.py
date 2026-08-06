@@ -4,6 +4,16 @@ from django.db import models
 class Deck(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
+    # Sprint 1.5: decks are owned by a user. Nullable so existing
+    # seeded decks keep working; the API layer (views + serializer) sets
+    # owner=request.user on create and scopes the queryset accordingly.
+    owner = models.ForeignKey(
+        "auth.User",
+        related_name="decks",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
