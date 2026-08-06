@@ -2,6 +2,7 @@
 Base settings for MemorAI. Environment-specific settings inherit from this.
 Secrets must come from env via django-environ; never hardcode keys here.
 """
+from datetime import timedelta
 from pathlib import Path
 import environ
 
@@ -34,9 +35,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "flashcards",
     "apps.ai",
+    "apps.users",
 ]
 
 MIDDLEWARE = [
@@ -107,8 +111,29 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 
 # REST framework
+# Sprint 1.5: apertamos auth. JWT (SimpleJWT) covers the API; SessionAuth is
+# kept so Django admin and force_authenticate in tests still resolve the user.
+# Default permission is IsAuthenticated; endpoints that must be public
+# (login/refresh/verify) set AllowAny explicitly.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
 }
 
 # AI configuration (consumed by apps.ai from Sprint 2)

@@ -3,9 +3,15 @@
 All endpoints sit under /api/v1/ai/ and delegate to the orchestrator.
 No LLM client or prompt is imported here, so the boundary the SDD
 defines (sec 3.3) is respected: views only talk to run_flow().
+
+Sprint 1.5: auth is now enforced. Every endpoint requires an
+authenticated user (DEFAULT_PERMISSION_CLASSES = IsAuthenticated in
+settings/base.py); the request.user passed to the flows is always
+authenticated, so the anonymous branches inside the flows are kept
+only for parity with internal/async callers (Celery tasks).
 """
 from rest_framework import status
-from rest_framework.permissions import AllowAny  # tightened in Sprint 1.5
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -24,7 +30,7 @@ from .services.orchestrator import run_flow
 
 
 class FeedbackView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @enforce_ai_quota
     def post(self, request):
@@ -37,7 +43,7 @@ class FeedbackView(APIView):
             "feedback",
             data,
             language=language,
-            user=request.user if request.user.is_authenticated else None,
+            user=request.user,
         )
         out_s = FeedbackResponseSerializer(result)
         return Response(out_s.data, status=status.HTTP_200_OK)
@@ -46,7 +52,7 @@ class FeedbackView(APIView):
 class SearchView(APIView):
     """POST /api/v1/ai/search/ — semantic search over flashcards."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @enforce_ai_quota
     def post(self, request):
@@ -58,7 +64,7 @@ class SearchView(APIView):
             "rag",
             {"query": data["query"], "top_k": data["top_k"]},
             language="pt",
-            user=request.user if request.user.is_authenticated else None,
+            user=request.user,
         )
         # SearchResponseSerializer is a plain DictSerializer; build it directly.
         hits = SearchHitSerializer(result.hits, many=True).data
@@ -83,16 +89,15 @@ class ReportView(APIView):
     via GET /api/v1/ai/tasks/{task_id}/.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @enforce_ai_quota
     def get(self, request):
         from .tasks import generate_report_task
 
         language = request.query_params.get("language", "pt")
-        user = request.user if request.user.is_authenticated else None
 
-        task = generate_report_task.delay(user.id if user else None, language)
+        task = generate_report_task.delay(request.user.id, language)
         if not task.successful():
             out_s = TaskResultSerializer(
                 {"task_id": task.id, "status": task.status}
@@ -110,7 +115,7 @@ class SuggestionView(APIView):
     a task_id for polling in async mode.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         from .tasks import generate_suggestions_task
@@ -118,9 +123,8 @@ class SuggestionView(APIView):
         in_s = SuggestionRequestSerializer(data=request.data)
         in_s.is_valid(raise_exception=True)
         top_k = in_s.validated_data["top_k"]
-        user = request.user if request.user.is_authenticated else None
 
-        task = generate_suggestions_task.delay(user.id if user else None, top_k)
+        task = generate_suggestions_task.delay(request.user.id, top_k)
         if not task.successful():
             out_s = TaskResultSerializer(
                 {"task_id": task.id, "status": task.status}
@@ -134,7 +138,7 @@ class SuggestionView(APIView):
 class TaskResultView(APIView):
     """GET /api/v1/ai/tasks/{task_id}/ — poll an async AI job's result."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, task_id):
         from .tasks import generate_report_task, generate_suggestions_task
