@@ -31,9 +31,16 @@ _PRICING_PER_M = {
 
 def _lookup(provider: str, model: str) -> dict[str, float]:
     table = _PRICING_PER_M.get(provider) or _PRICING_PER_M["openai"]
-    for prefix, price in table.items():
-        if prefix != "_default" and model.startswith(prefix):
-            return price
+    # Match the longest prefix so that "gpt-4o-mini-2024-07-18" wins over
+    # "gpt-4o". Iterating by descending prefix length keeps specificity.
+    matches = [
+        (prefix, price)
+        for prefix, price in table.items()
+        if prefix != "_default" and model.startswith(prefix)
+    ]
+    if matches:
+        matches.sort(key=lambda kv: len(kv[0]), reverse=True)
+        return matches[0][1]
     return table.get("_default", {"in": 0.0, "out": 0.0})
 
 

@@ -20,7 +20,6 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils import timezone
 
 from ..models import AIEvent, AIUsage
 
@@ -91,7 +90,7 @@ def _record_event(
 
 
 def _bump_usage(user, tokens_in: int, tokens_out: int, cost: Decimal) -> None:
-    day = _dt.date.today()
+    day = _dt.date.today()  # matches quota_remaining's day selection
     usage, _ = AIUsage.objects.get_or_create(user=user, day=day)
     usage.tokens_in += tokens_in
     usage.tokens_out += tokens_out
@@ -101,10 +100,16 @@ def _bump_usage(user, tokens_in: int, tokens_out: int, cost: Decimal) -> None:
 
 
 def quota_remaining(user) -> dict[str, float]:
-    """Returns remaining tokens and cost for the current day (for middleware)."""
+    """Returns remaining tokens and cost for the current day (for middleware).
+
+    Uses datetime.date.today() consistently with the AIUsage `day` field; we
+    avoid mixing timezone.now().date() because tests and prod-locally
+    running AIUsage rows use local date, and the quota rolls per calendar
+    day from the user perspective.
+    """
     if user is None or not user.is_authenticated:
         return {"tokens": float("inf"), "cost_usd": float("inf")}
-    day = timezone.now().date()
+    day = _dt.date.today()
     try:
         usage = AIUsage.objects.get(user=user, day=day)
     except AIUsage.DoesNotExist:
@@ -123,8 +128,8 @@ def quota_exceeded(user) -> tuple[bool, str | None]:
     if user is None or not user.is_authenticated:
         return (False, None)
     rem = quota_remaining(user)
-    if rem["tokens"] <= 0:
-        return (True, "daily_token_cap_per_user")
     if rem["cost_usd"] <= 0:
         return (True, "daily_cost_cap_usd")
+    if rem["tokens"] <= 0:
+        return (True, "daily_token_cap_per_user")
     return (False, None)
