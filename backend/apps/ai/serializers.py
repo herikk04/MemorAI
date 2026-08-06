@@ -50,3 +50,49 @@ class SearchResponseSerializer(serializers.Serializer):
     provider = serializers.CharField()
     tokens = serializers.IntegerField()
     hits = SearchHitSerializer(many=True)
+
+
+class SuggestionRequestSerializer(serializers.Serializer):
+    """Input contract for POST /api/v1/ai/suggestions/."""
+    top_k = serializers.IntegerField(min_value=1, max_value=50, default=10)
+
+
+class SuggestionHitSerializer(serializers.Serializer):
+    card_id = serializers.IntegerField()
+    deck_id = serializers.IntegerField()
+    deck_name = serializers.CharField()
+    front = serializers.CharField()
+    reason = serializers.CharField()
+    due_in_seconds = serializers.IntegerField()
+
+
+class SuggestionResponseSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(allow_null=True)
+    status = serializers.CharField()
+    hits = SuggestionHitSerializer(many=True)
+
+
+class ReportMetricsSerializer(serializers.Serializer):
+    total_reviews = serializers.IntegerField()
+    total_lapses = serializers.IntegerField()
+    avg_reps = serializers.FloatField()
+    last_review_at = serializers.CharField(allow_blank=True)
+
+
+class ReportResponseSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(allow_null=True)
+    metrics = ReportMetricsSerializer()
+    text = serializers.CharField()
+    status = serializers.CharField()
+    prompt_version = serializers.CharField()
+    model = serializers.CharField()
+    provider = serializers.CharField()
+    tokens_in = serializers.IntegerField()
+    tokens_out = serializers.IntegerField()
+
+
+class TaskResultSerializer(serializers.Serializer):
+    """Polling envelope for async AI jobs (Sprint 4)."""
+    task_id = serializers.CharField()
+    status = serializers.CharField()
+    result = serializers.JSONField(required=False, allow_null=True)
