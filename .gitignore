@@ -25,3 +25,8 @@ yarn-error.log*
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+
+# Sessoes internas de handoff: fora do controle de versao.
+# Arquivos .md que registram o estado do trabalho e nao devem ir pro git.
+confidencial/
+docs/SESSION.md
