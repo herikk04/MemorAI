@@ -1,4 +1,4 @@
-"""DRF views for the AI app endpoints (Sprint 2).
+"""DRF views for the AI app endpoints (Sprint 2 + RAG additions).
 
 All endpoints sit under /api/v1/ai/ and delegate to the orchestrator.
 No LLM client or prompt is imported here, so the boundary the SDD
@@ -10,7 +10,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .middleware import enforce_ai_quota
-from .serializers import FeedbackRequestSerializer, FeedbackResponseSerializer
+from .serializers import (
+    FeedbackRequestSerializer,
+    FeedbackResponseSerializer,
+    SearchHitSerializer,
+    SearchRequestSerializer,
+)
 from .services.orchestrator import run_flow
 
 
@@ -32,3 +37,35 @@ class FeedbackView(APIView):
         )
         out_s = FeedbackResponseSerializer(result)
         return Response(out_s.data, status=status.HTTP_200_OK)
+
+
+class SearchView(APIView):
+    """POST /api/v1/ai/search/ — semantic search over flashcards."""
+
+    permission_classes = [AllowAny]
+
+    @enforce_ai_quota
+    def post(self, request):
+        in_s = SearchRequestSerializer(data=request.data)
+        in_s.is_valid(raise_exception=True)
+        data = in_s.validated_data
+
+        result = run_flow(
+            "rag",
+            {"query": data["query"], "top_k": data["top_k"]},
+            language="pt",
+            user=request.user if request.user.is_authenticated else None,
+        )
+        # SearchResponseSerializer is a plain DictSerializer; build it directly.
+        hits = SearchHitSerializer(result.hits, many=True).data
+        return Response(
+            {
+                "query": result.query,
+                "status": result.status,
+                "model": result.model,
+                "provider": result.provider,
+                "tokens": result.tokens,
+                "hits": hits,
+            },
+            status=status.HTTP_200_OK,
+        )
