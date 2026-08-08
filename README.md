@@ -1,119 +1,180 @@
-# Documento de Planejamento da Plataforma de Ensino
+# MemorAI
 
-## 1. Visão Geral
-**Nome do Projeto:** MemorAI
+Plataforma de ensino de programação fundamentada na **Curva do Esquecimento de Ebbinghaus**, que aplica **repetição espaçada (SRS)** para maximizar a retenção de conhecimento — via flashcards, módulos estruturados, gamificação e feedback inteligente.
 
-**Descrição:**
-Uma plataforma de ensino baseada na metodologia da Curva do Esquecimento de Ebbinghaus, utilizando o open-source Anki para auxiliar na retenção de conhecimento e no ensino de programação. O objetivo é proporcionar um aprendizado eficaz e otimizado para programadores iniciantes e avançados, garantindo maior retenção através de revisões espaçadas.
-
-## 2. Público-Alvo
-- Estudantes de programação iniciantes e avançados.
-- Profissionais que desejam aprimorar suas habilidades técnicas.
-- Instituições de ensino que buscam soluções interativas para ensino de programação.
-- Empresas que querem treinar desenvolvedores de forma eficaz.
-
-## 3. Metodologia e Tecnologias Utilizadas
-- **Curva do Esquecimento de Ebbinghaus**: Planejamento de revisões programadas para maximizar a retenção do conhecimento.
-- **Anki (Open Source)**: Sistema de repetição espaçada (SRS) para reforço de aprendizado.
-- **Gamificação**: Pontuações, conquistas e desafios para engajar os usuários.
-- **Projetos Práticos**: Exercícios aplicados e desafios de código para solidificar o aprendizado.
-- **Feedback Inteligente**: Algoritmos para sugerir reforço nos conteúdos onde o aluno tem mais dificuldade.
-- **Microlearning**: Conteúdos curtos e direcionados para facilitar o aprendizado progressivo.
-- **Monitoramento de desempenho**: Relatórios de evolução personalizados para cada aluno.
-
-## 4. Funcionalidades Principais
-- **Criação e Gerenciamento de Flashcards:**
-  - Integração com o Anki para repetição espaçada.
-  - Cards personalizados com código, imagens e explicações detalhadas.
-  - Possibilidade de compartilhamento de decks entre usuários.
-- **Módulos de Aprendizado Estruturados:**
-  - Cursos organizados por dificuldade e temas.
-  - Exercícios interativos para reforço do aprendizado.
-  - Certificados de conclusão para usuários engajados.
-- **Sistema de Recompensas e Gamificação:**
-  - Pontuação baseada na consistência do estudo.
-  - Conquistas desbloqueáveis conforme o aluno progride.
-  - Rankings e desafios semanais.
-- **Dashboard de Acompanhamento:**
-  - Relatórios de progresso e desempenho.
-  - Sugestões de revisão baseadas nos dados de aprendizado.
-  - Notificações e lembretes inteligentes.
-- **Integração com Código e IDEs:**
-  - Ambientes interativos para escrever e executar código diretamente na plataforma.
-  - Integração com GitHub para submissão de projetos.
-- **Comunidade e Fórum de Dúvidas:**
-  - Espaço para troca de conhecimentos entre usuários.
-  - Sessões de perguntas e respostas sobre programação.
-  - Suporte a grupos de estudo e mentorias.
-
-## 5. Possíveis Tecnologias a Utilizar
-- **Back-end:** Python (Django/FastAPI), Node.js.
-- **Front-end:** React.js/Vue.js, Flutter (para versão mobile).
-- **Banco de Dados:** PostgreSQL, MongoDB.
-- **Infraestrutura:** AWS, Firebase, Docker.
-- **Integrações:** AnkiConnect API, Jupyter Notebooks.
-- **Monitoramento e Analytics:** Grafana, Kibana, Google Analytics.
-
-## 6. Roadmap Inicial
-### **Fase 1 - Prototipagem e Validação**
-- Definição detalhada das features principais.
-- Desenvolvimento de um MVP (Mínimo Produto Viável).
-- Testes iniciais com um pequeno grupo de usuários.
-- Refinamento do modelo de aprendizado com base no feedback inicial.
-
-### **Fase 2 - Desenvolvimento da Plataforma**
-- Expansão das funcionalidades.
-- Implementação da gamificação e comunidade.
-- Integrações com IDEs e Anki.
-- Implementação de módulos para análise de desempenho dos alunos.
-
-### **Fase 3 - Lançamento e Expansão**
-- Lançamento beta para mais usuários.
-- Ajustes com base no feedback.
-- Expansão de conteúdos e funcionalidades.
-- Estratégias de marketing e engajamento para escalar a plataforma.
-
-## 7. Desafios e Considerações
-- **Acurácia do algoritmo de revisão espaçada**: Ajustar a frequência ideal de revisão para otimizar retenção.
-- **Usabilidade e UX**: Criar uma interface amigável e intuitiva para diferentes níveis de usuários.
-- **Engajamento dos usuários**: Implementação eficiente de gamificação e recompensas.
-- **Infraestrutura escalável**: Suporte ao crescimento do número de usuários e conteúdos.
-- **Monetização**: Definir possíveis modelos de receita (freemium, cursos pagos, parcerias).
-
-## 8. Estrutura do Repositório Git
-
-```
-📂 plataforma-ensino
-  ├── 📄 README.md - Visão geral do projeto
-  ├── 📄 CONTRIBUTING.md - Guia para contribuição
-  ├── 📄 ROADMAP.md - Planejamento e fases do projeto
-  ├── 📄 LICENSE - Licença de código aberto
-  │
-  ├── 📂 docs/ - Documentação do projeto
-  │ ├── 📄 architecture.md - Estrutura técnica do projeto
-  │ ├── 📄 methodology.md - Metodologia de ensino utilizada
-  │ ├── 📂 api/ - Documentação da API (caso necessário)
-  │
-  ├── 📂 design/ - Protótipos e wireframes
-  │
-  ├── 📂 backend/ - Código relacionado ao backend
-  │
-  ├── 📂 frontend/ - Código relacionado ao frontend
-  │
-  ├── 📂 mobile/ - Aplicativo mobile (se aplicável)
-  │
-  ├── 📂 datasets/ - Dados para treinamento e testes
-  │
-  ├── 📂 tests/ - Testes automatizados
-  │
-  └── 📂 scripts/ - Scripts utilitários e automação
-```
-
-## 9. Próximos Passos
-- Refinar a proposta com base em pesquisas e feedback.
-- Criar um wireframe ou protótipo inicial.
-- Definir um time e ferramentas para desenvolvimento.
-- Configurar o repositório no GitHub para colaboração.
+> Status atual: **MVP em construção**. Backend Django REST + auth JWT ativos; camada de IA isolada em scaffold; frontend em scaffolding. Veja [`docs/SDD.md`](docs/SDD.md) como fonte única de verdade arquitetural.
 
 ---
-Este documento pode ser atualizado conforme novas ideias e requisitos forem surgindo.
+
+## Sumário
+
+- [Visão](#visão)
+- [Público-alvo](#público-alvo)
+- [Metodologia](#metodologia)
+- [Funcionalidades previstas](#funcionalidades-previstas)
+- [Stack](#stack)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Como rodar](#como-rodar)
+- [Roadmap](#roadmap)
+- [Documentação](#documentação)
+- [Como contribuir](#como-contribuir)
+- [Licença](#licença)
+
+## Visão
+
+Aprender programação é luta contra o esquecimento. O MemorAI aplica o algoritmo de Ebbinghaus (com path futuro para o scheduler modern FSRS e integração opcional com o Anki via AnkiConnect) para agendar revisões no ponto certo da curva e entregar — junto ao conteúdo — feedback gerado por IA, módulos práticos e gamificação que sustenta a consistência.
+
+O projeto trata a IA como **camada isolada de serviço** (ver `docs/SDD.md` §3): prompts versionados, adaptadores pluggáveis de provedores (OpenAI/Anthropic/Ollama), guardrails de custo/PII e fallback determinístico — nunca como adorno.
+
+## Público-alvo
+
+- Estudantes de programação iniciantes e avançados.
+- Profissionais em upskilling técnico.
+- Instituições de ensino buscando soluções interativas.
+- Empresas treinando desenvolvedores.
+
+## Metodologia
+
+- **Curva do Esquecimento de Ebbinghaus**: revisões programadas para maximizar retenção.
+- **Repetição espaçada (SRS)**: scheduler pluggável (FSRS/SM2) em `flashcards/services/scheduler.py` (caminho planejado), com AnkiConnect como canal opcional.
+- **Feedback inteligente**: sugestões de reforço por conteúdo de maior dificuldade, via fluxos de IA.
+- **Microlearning**: conteúdos curtos e direcionados.
+- **Gamificação**: pontuação por consistência, conquistas, rankings semanais.
+- **Monitoramento de progresso**: relatórios de evolução personalizados por aluno.
+
+## Funcionalidades previstas
+
+- **Criação e gerenciamento de flashcards** — cards personalizados (código, imagens, explicações), decks compartilháveis, integração opcional com Anki.
+- **Módulos de aprendizado estruturados** — cursos por dificuldade e temas, exercícios interativos, certificados de conclusão.
+- **Gamificação** — pontuação por consistência, conquistas, desafios e rankings semanais.
+- **Dashboard de acompanhamento** — progresso e desempenho, sugestões de revisão, lembretes inteligentes.
+- **Integração com código e IDEs** — ambientes interativos para executar código na plataforma; integração com GitHub para submissão de projetos.
+- **Comunidade** — fórum de dúvidas, sessões de Q&A, grupos de estudo e mentorias.
+
+## Stack
+
+**Backend (ativo):**
+- Python 3 · Django 5.2 · Django REST Framework 3.16
+- SQLite em dev · PostgreSQL 16 + pgvector em prod (via Docker)
+- `djangorestframework-simplejwt` (auth JWT) · `drf-spectacular` (OpenAPI) · `django-cors-headers`
+- Celery 5.4 + Redis 7 (jobs assíncronos de IA analítica) — pronto no compose
+- LLM clients (OpenAI 1.40 / Anthropic 0.34) — reservados para a camada de IA
+- `django-environ` (secrets), `structlog` (observabilidade)
+
+**Frontend / mobile:** scaffolding (ver `frontend/` e `mobile/`).
+
+**Infra:** Docker Compose (`db` + `redis` + `web` + `worker` + `frontend`).
+
+## Estrutura do repositório
+
+```
+memorai/
+├── README.md                    # este arquivo
+├── ROADMAP.md                   # planejamento por sprints
+├── CONTRIBUTING.md
+├── LICENSE
+├── docker-compose.yml           # stack local: db+redis+web+worker+frontend
+├── .env.example
+├── docs/
+│   ├── SDD.md                   # Documento de Design de Software (fonte de verdade)
+│   ├── architecture.md
+│   └── methodology.md
+├── design/                      # design system e referências visuais
+├── backend/
+│   ├── apps/                    # apps Django modulares
+│   │   ├── flashcards/          # domínio SRS (Deck/Card/Review)
+│   │   ├── users/               # auth JWT + perfis
+│   │   └── ai/                  # núcleo de IA isolado (orchestrator/flows/clients/prompts)
+│   ├── config/                  # wire-up do Celery e roteador central
+│   ├── memorai/                 # projeto Django (settings por ambiente)
+│   ├── tests/
+│   ├── requirements.txt
+│   ├── pyproject.toml           # ruff/mypy/pytest
+│   └── Dockerfile
+├── frontend/
+├── mobile/                      # placeholder reservado (Flutter futuro)
+├── scripts/                     # utilidades e automação
+└── tests/                        # e2e
+```
+
+## Como rodar
+
+### Pré-requisitos
+
+- Docker + Docker Compose (ou Python 3.11+ e Node 20+ para rodar localmente sem containers)
+- Para IA: chaves de provedor LLM (`OPENAI_API_KEY` etc.) — opcionais em dev (fallback heurístico)
+
+### Com Docker (recomendado)
+
+```bash
+# 1. Configure variáveis de ambiente
+cp .env.example .env
+
+# 2. Suba a stack completa (db, redis, web, worker, frontend)
+docker compose up --build
+```
+
+Serviços disponíveis:
+
+| Serviço   | URL / porta          | Observações                                        |
+| --------- | -------------------- | -------------------------------------------------- |
+| `web`     | http://localhost:8000 | API Django + admin                                 |
+| `frontend`| http://localhost:3000 | SPA (em scaffold)                                   |
+| `db`      | localhost:5432       | PostgreSQL 16 + pgvector (`memorai:memorai`)      |
+| `redis`   | localhost:6379      | cache + broker Celery                              |
+
+### Backend localmente (sem Docker)
+
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+Para rodar a fila de IA (opcional): `celery -A memorai worker -l info`.
+
+### Testes
+
+```bash
+cd backend && pytest
+# ou, dentro do container:
+docker compose exec web pytest
+```
+
+## Roadmap
+
+Detalhado em [`ROADMAP.md`](ROADMAP.md). Resumo das sprints:
+
+- **Sprint 0 — Fundação** ✅ — backend modular, requirements, docker-compose, settings por ambiente.
+- **Sprint 1 — SRS** — campos SRS em `Card`, tabela `Review`, scheduler FSRS, endpoint `/cards/{id}/review/`.
+- **Sprint 2 — Núcleo de IA** — app `ai/` com `orchestrator`, `llm_client`, flow de feedback, prompts versionados, `AIEvent`, rate-limit.
+- **Sprint 3 — RAG** — embeddings + pgvector + flow de busca semântica.
+- **Sprint 4 — Analytics assíncrono** — Celery jobs de relatório e sugestões de revisão.
+- **Sprint 5 — Frontend** — router, telas (Review, Report, Login), conexão com endpoints de IA/SRS.
+- **Sprint 6 — AnkiConnect** — `flashcards/services/anki.py` + sincronização opcional.
+
+## Documentação
+
+| Documento | Conteúdo |
+| --- | --- |
+| [`docs/SDD.md`](docs/SDD.md) | **Software Design Document** — arquitetura, módulos de IA, schema de dados, API, trade-offs. |
+| [`docs/architecture.md`](docs/architecture.md) | Diagrama lógico e decisão de padrão arquitetural. |
+| [`docs/methodology.md`](docs/methodology.md) | Ebbinghaus, FSRS, microlearning. |
+| [`ROADMAP.md`](ROADMAP.md) | Planejamento por sprints. |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Guia para contribuição. |
+
+## Como contribuir
+
+Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) (a preencher) e [`docs/SDD.md`](docs/SDD.md) antes de tocar em arquitetura. Em especial:
+
+- A IA é **app Django isolada** (`backend/apps/ai/`); toda chamada externa passa por `orchestrator` e `llm_client`. Não introduzir dependências de LLM em outras apps.
+- Prompts vivem em `ai/prompts/*.yaml` versionados; nunca strings literais em views.
+- Segredos via env, nunca hardcoded (`django-environ`).
+- Siga `ruff` + `mypy` (config em `backend/pyproject.toml`).
+
+## Licença
+
+Veja [`LICENSE`](LICENSE).
