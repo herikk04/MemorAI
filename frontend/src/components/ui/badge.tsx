@@ -3,6 +3,11 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Badge — Design System MemorAI §6.3
+ * Variantes de domínio: success (estado positivo), warning (atenção/streak).
+ * Cores via tokens semânticos, nunca hex hardcoded.
+ */
 const badgeVariants = cva(
   "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
@@ -12,11 +17,13 @@ const badgeVariants = cva(
           "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        success:
+          "border-transparent bg-success/15 text-success dark:text-success",
+        warning:
+          "border-transparent bg-warning/15 text-warning dark:text-warning",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-        success:
-          "border-transparent bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+        outline: "border-border text-foreground",
       },
     },
     defaultVariants: {
