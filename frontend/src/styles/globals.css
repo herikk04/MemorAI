@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+/*
+ * MemorAI Design System — Tailwind v4 CSS-first tokens.
+ * Versão 1.0 · Agosto 2026
+ *
+ * Cor primária: Emerald (verde-esmeralda) — progresso, aprendizado, saúde.
+ * Neutros: Slate — sóbrio, técnico, foco no conteúdo.
+ * Streak/Atenção: Amber — distinção clara do primário.
+ *
+ * ATENÇÃO: `@theme inline` é obrigatório quando o valor é uma `var()` que
+ * aponta para outra CSS var em Tailwind v4. Sem `inline`, as utilities não
+ * são geradas corretamente.
+ * https://tailwindcss.com/docs/theme#referencing-other-variables
+ */
+
+@theme inline {
+  /* ── Cores semânticas ─────────────────────────────────── */
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+
+  --color-primary:                 var(--primary);
+  --color-primary-foreground:      var(--primary-foreground);
+
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+
+  --color-warning:                 var(--warning);
+  --color-warning-foreground:      var(--warning-foreground);
+
+  --color-success:                 var(--success);
+  --color-success-foreground:      var(--success-foreground);
+
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+
+  /* ── Sidebar ──────────────────────────────────────────── */
+  --color-sidebar:                        var(--sidebar);
+  --color-sidebar-foreground:             var(--sidebar-foreground);
+  --color-sidebar-accent:                 var(--sidebar-accent);
+  --color-sidebar-accent-foreground:      var(--sidebar-accent-foreground);
+  --color-sidebar-border:                 var(--sidebar-border);
+
+  /* ── Radius ───────────────────────────────────────────── */
+  --radius-sm:  calc(var(--radius) - 4px);   /* 4px  — badges, pills */
+  --radius-md:  calc(var(--radius) - 2px);   /* 6px  — buttons       */
+  --radius-lg:  var(--radius);               /* 8px  — padrão        */
+  --radius-xl:  calc(var(--radius) + 4px);   /* 12px — cards         */
+  --radius-2xl: calc(var(--radius) + 8px);   /* 16px — modals        */
+
+  /* ── Tipografia ───────────────────────────────────────── */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+}
+
+/* ==========================================================================
+ * Tema CLARO — Editorial educacional.
+ * Emerald primário · Slate neutros · Papel off-white
+ * ========================================================================== */
+:root,
+.light {
+  /* Fundo */
+  --background: #f8faf8;
+  --foreground: #111816;
+
+  /* Card / Popover */
+  --card:              #ffffff;
+  --card-foreground:   #111816;
+  --popover:           #ffffff;
+  --popover-foreground:#111816;
+
+  /* Primária — Emerald 600 */
+  --primary:            #059669;
+  --primary-foreground: #ffffff;
+
+  /* Secundária — Emerald 50 */
+  --secondary:            #ecfdf5;
+  --secondary-foreground: #065f46;
+
+  /* Muted — Slate 100 */
+  --muted:            #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* Accent — Emerald 100 */
+  --accent:            #d1fae5;
+  --accent-foreground: #065f46;
+
+  /* Destrutivo — Red 600 */
+  --destructive:            #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /* Warning — Amber 500 (streak, atenção) */
+  --warning:            #f59e0b;
+  --warning-foreground: #1a1000;
+
+  /* Success — Emerald 500 (acerto de card) */
+  --success:            #10b981;
+  --success-foreground: #022c22;
+
+  /* Bordas / Inputs */
+  --border: #e2e8f0;
+  --input:  #e2e8f0;
+  --ring:   #059669;
+
+  /* Sidebar */
+  --sidebar:                   #ffffff;
+  --sidebar-foreground:        #1e293b;
+  --sidebar-accent:            #f1f5f9;
+  --sidebar-accent-foreground: #111816;
+  --sidebar-border:            #e2e8f0;
+
+  /* Radius base (outros são calculados via @theme inline) */
+  --radius: 0.5rem;
+}
+
+/* ==========================================================================
+ * Tema DARK — Técnico / IDE.
+ * Emerald mais claro (34d399) para contraste · Background verde-preto profundo
+ * ========================================================================== */
+.dark {
+  /* Fundo */
+  --background: #0c1210;
+  --foreground: #e2f0ea;
+
+  /* Card / Popover */
+  --card:              #121a16;
+  --card-foreground:   #e2f0ea;
+  --popover:           #121a16;
+  --popover-foreground:#e2f0ea;
+
+  /* Primária — Emerald 400 (mais claro p/ contraste no escuro) */
+  --primary:            #34d399;
+  --primary-foreground: #022c22;
+
+  /* Secundária */
+  --secondary:            #1a2e24;
+  --secondary-foreground: #6ee7b7;
+
+  /* Muted */
+  --muted:            #172032;
+  --muted-foreground: #8ba89a;
+
+  /* Accent */
+  --accent:            #1e3028;
+  --accent-foreground: #6ee7b7;
+
+  /* Destrutivo */
+  --destructive:            #f87171;
+  --destructive-foreground: #0c1210;
+
+  /* Warning */
+  --warning:            #fbbf24;
+  --warning-foreground: #0c1210;
+
+  /* Success */
+  --success:            #34d399;
+  --success-foreground: #022c22;
+
+  /* Bordas / Inputs */
+  --border: #1e3028;
+  --input:  #1e3028;
+  --ring:   #34d399;
+
+  /* Sidebar */
+  --sidebar:                   #0a100d;
+  --sidebar-foreground:        #c4ddd3;
+  --sidebar-accent:            #172032;
+  --sidebar-accent-foreground: #e2f0ea;
+  --sidebar-border:            #1a2e24;
+}
+
+/* ==========================================================================
+ * Base global
+ * ========================================================================== */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Ativa features do Inter para melhor legibilidade */
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+* {
+  border-color: var(--border);
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+  font-feature-settings: normal;
+}
+
+/* ==========================================================================
+ * Scrollbar discreta
+ * ========================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}

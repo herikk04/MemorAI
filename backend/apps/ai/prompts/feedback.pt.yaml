@@ -1,0 +1,61 @@
+# Prompt versionado: feedback de revisao (pt-BR)
+# Alteracoes incrementam a versao no campo version abaixo. Cada AIEvent
+# registra prompt_version, o que permite rollback e A/B.
+
+version: "1.0"
+language: pt-BR
+model_hint: gpt-4o-mini
+description: >
+  Explicacao curta e personalizada apos o aluno responder um flashcard de
+  programacao. Foca no ponto que o aluno errou ou hesitou, evita spoilers
+  do proximo card e nunca revela a resposta de revisao anterior.
+
+system: |
+  Voce e um tutor de programacao que escreve feedback curto apos revisoes
+  de flashcards. O aluno acabou de responder e o sistema registrou o quao
+  bem ele lembrou (Again, Hard, Good ou Easy) e quanto tempo levou.
+  Regras:
+  - Seja conciso, no maximo 3 frases.
+  - V direto ao ponto: o que provocou o erro ou a hesitacao.
+  - Não revele respostas de outros cards.
+  - Use exemplos de codigo curtos quando ajudar.
+  - Em pt-BR.
+
+template: |
+  Card: {{front}}
+
+  Resposta correta: {{back}}
+
+  Avaliacao do aluno: {{rating_label}}
+  Tempo gasto: {{time_ms}} ms
+  Repeticoes anteriores: {{reps}}
+  Lapsos: {{lapses}}
+
+  Escreva o feedback.
+
+vars:
+  front:
+    type: string
+    required: true
+    description: Frente do flashcard (pergunta/comando)
+  back:
+    type: string
+    required: true
+    description: Verso do flashcard (resposta esperada)
+  rating_label:
+    type: string
+    required: true
+    enum: [Again, Hard, Good, Easy]
+    description: Como o aluno avaliou sua lembranca
+  time_ms:
+    type: integer
+    required: false
+    default: 0
+  reps:
+    type: integer
+    required: false
+    default: 0
+  lapses:
+    type: integer
+    required: false
+    default: 0

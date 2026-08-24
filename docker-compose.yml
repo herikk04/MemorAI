@@ -1,0 +1,85 @@
+# MemorAI — local development stack
+# Sprint 0: db + redis + web + worker + frontend
+# IA deps (openai/anthropic/pgvector) are imported in code from Sprint 2+;
+# services here are ready for those sprints.
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: memorai
+      POSTGRES_PASSWORD: memorai
+      POSTGRES_DB: memorai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memorai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: memorai.settings.dev
+      DATABASE_URL: postgres://memorai:memorai@db:5432/memorai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python manage.py runserver 0.0.0.0:8000
+
+  worker:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: memorai.settings.dev
+      DATABASE_URL: postgres://memorai:memorai@db:5432/memorai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - web
+    command: celery -A memorai worker -l info
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8000/api
+    volumes:
+      - ./frontend/src:/app/src
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
