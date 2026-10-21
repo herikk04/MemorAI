@@ -134,6 +134,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    # Brute-force protection: login/register opt in via throttle_scope = "auth".
+    "DEFAULT_THROTTLE_RATES": {"auth": env("AUTH_THROTTLE_RATE", default="10/min")},
 }
 
 # AI configuration (consumed by apps.ai from Sprint 2)

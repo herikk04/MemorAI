@@ -17,6 +17,10 @@ CELERY_TASK_STORE_EAGER_RESULT = True
 # In-memory result backend so AsyncResult lookups resolve in eager mode.
 CELERY_RESULT_BACKEND = "cache+memory://"
 
+# Auth tests hit login/register many times from one client; the throttle has
+# its own dedicated test (tests/test_auth_throttle.py) that lowers the rate.
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"auth": "1000/min"}  # noqa: F405
+
 # Cheaper AI defaults during tests (mock-friendly)
 AI_CONFIG["default_model"] = "test-mock-model"
 AI_CONFIG["provider"] = "mock"
