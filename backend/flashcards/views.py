@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Card, Deck, Review
 from .serializers import (
@@ -14,6 +15,7 @@ from .serializers import (
     ReviewSerializer,
 )
 from .services.scheduler import schedule_review
+from .services.stats import dashboard_stats
 
 logger = logging.getLogger("flashcards.review")
 
@@ -155,3 +157,10 @@ class CardViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(cards, many=True)
         return Response(serializer.data)
+
+
+class DashboardView(APIView):
+    """GET /api/v1/dashboard/: progress aggregates for the current user."""
+
+    def get(self, request):
+        return Response(dashboard_stats(request.user))
