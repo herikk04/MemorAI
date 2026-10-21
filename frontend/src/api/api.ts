@@ -41,7 +41,8 @@ async function tryRefresh(): Promise<string | null> {
     );
     const next = response.data?.access as string | undefined;
     if (next) {
-      sessionStorage.setItem("memorai-access", next);
+      // O backend rotaciona o refresh e põe o antigo na blacklist: guardar o novo.
+      tokenService.setTokens(next, response.data?.refresh as string | undefined);
       return next;
     }
     return null;

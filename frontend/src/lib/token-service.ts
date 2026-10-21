@@ -56,6 +56,11 @@ export const tokenService = {
       } as AuthUser)
     );
   },
+  /** Atualiza só os tokens (refresh com rotação devolve um refresh novo). */
+  setTokens(access: string, refresh?: string): void {
+    sessionStorage.setItem(ACCESS_KEY, access);
+    if (refresh) sessionStorage.setItem(REFRESH_KEY, refresh);
+  },
   clear(): void {
     sessionStorage.removeItem(ACCESS_KEY);
     sessionStorage.removeItem(REFRESH_KEY);
