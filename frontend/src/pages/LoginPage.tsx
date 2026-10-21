@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Brain, Loader2 } from "lucide-react";
 
 import { authApi } from "@/api/auth";
@@ -102,6 +102,12 @@ export default function LoginPage() {
                 "Entrar"
               )}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Não tem conta?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Criar conta
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

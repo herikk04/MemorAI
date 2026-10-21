@@ -4,6 +4,7 @@ import { tokenService, type LoginResponse } from "@/lib/token-service";
 /**
  * Auth API — MemorAI (backend: apps/users/views).
  *
+ * POST /auth/register/ -> cria a conta e devolve o mesmo payload do login
  * POST /auth/login/  -> { access, refresh, user_id, username, language }
  * POST /auth/refresh/-> { access, refresh } (rotaciona e blacklist o antigo)
  * POST /auth/verify/ -> 200 se access válido
@@ -14,6 +15,16 @@ export const authApi = {
       username,
       password,
     });
+    tokenService.setSession(data);
+    return data;
+  },
+  async register(input: {
+    username: string;
+    password: string;
+    email?: string;
+    language?: "pt" | "en";
+  }): Promise<LoginResponse> {
+    const { data } = await api.post<LoginResponse>("/auth/register/", input);
     tokenService.setSession(data);
     return data;
   },

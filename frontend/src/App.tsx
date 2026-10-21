@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { registerUnauthorizedHandler } from "@/api/api";
 import { tokenService } from "@/lib/token-service";
 import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ReviewPage from "@/pages/ReviewPage";
 import DeckPage from "@/pages/DeckPage";
@@ -12,7 +13,7 @@ import ReportPage from "@/pages/ReportPage";
 // Handler global de 401 após falha de refresh: limpa e manda pra /login.
 registerUnauthorizedHandler(() => {
   tokenService.clear();
-  if (window.location.pathname !== "/login") {
+  if (!["/login", "/register"].includes(window.location.pathname)) {
     window.location.assign("/login");
   }
 });
@@ -30,6 +31,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/dashboard"
             element={
