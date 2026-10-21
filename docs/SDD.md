@@ -5,6 +5,8 @@
 
 ---
 
+> **Nota (2026-10):** as seções 1 e 8.1 descrevem o repositório no início (Sprint 0). Hoje o backend, a camada de IA e o frontend estão implementados; o estado atual está no [`ROADMAP.md`](../ROADMAP.md). O restante do documento segue válido como desenho arquitetural.
+
 ## 1. Visão Geral (Executive Summary)
 
 ### Propósito

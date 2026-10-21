@@ -2,7 +2,7 @@
 
 Plataforma de ensino de programação fundamentada na **Curva do Esquecimento de Ebbinghaus**, que aplica **repetição espaçada (SRS)** para maximizar a retenção de conhecimento — via flashcards, módulos estruturados, gamificação e feedback inteligente.
 
-> Status atual: **MVP em construção**. Backend Django REST + auth JWT ativos; camada de IA isolada em scaffold; frontend em scaffolding. Veja [`docs/SDD.md`](docs/SDD.md) como fonte única de verdade arquitetural.
+> Status atual: **MVP funcional**. Dá para cadastrar, criar decks, gerar cards com IA, revisar com repetição espaçada e acompanhar o progresso. Veja o [`ROADMAP.md`](ROADMAP.md) para o que vem a seguir e o [`docs/SDD.md`](docs/SDD.md) para a arquitetura.
 
 ---
 
@@ -44,7 +44,7 @@ O projeto trata a IA como **camada isolada de serviço** (ver `docs/SDD.md` §3)
 
 ## Funcionalidades previstas
 
-- **Criação e gerenciamento de flashcards** — cards personalizados (código, imagens, explicações), decks compartilháveis, integração opcional com Anki.
+- **Criação e gerenciamento de flashcards** — cards manuais ou **gerados por IA** a partir de um tópico ou texto; decks por usuário. *Previsto:* decks compartilháveis e importação/exportação Anki.
 - **Módulos de aprendizado estruturados** — cursos por dificuldade e temas, exercícios interativos, certificados de conclusão.
 - **Gamificação** — pontuação por consistência, conquistas, desafios e rankings semanais.
 - **Dashboard de acompanhamento** — progresso e desempenho, sugestões de revisão, lembretes inteligentes.
@@ -61,9 +61,11 @@ O projeto trata a IA como **camada isolada de serviço** (ver `docs/SDD.md` §3)
 - LLM clients (OpenAI 1.40 / Anthropic 0.34) — reservados para a camada de IA
 - `django-environ` (secrets), `structlog` (observabilidade)
 
-**Frontend / mobile:** scaffolding (ver `frontend/` e `mobile/`).
+**Frontend:** React 19 + TypeScript (strict), React Router, Tailwind v4, Radix UI, axios com refresh automático de JWT, Jest + Testing Library.
 
-**Infra:** Docker Compose (`db` + `redis` + `web` + `worker` + `frontend`).
+**Mobile:** placeholder reservado (`mobile/`).
+
+**Infra:** Docker Compose (`db` + `redis` + `web` + `worker` + `frontend`), imagens de produção (gunicorn + whitenoise, nginx) e CI no GitHub Actions.
 
 ## Estrutura do repositório
 
@@ -119,9 +121,17 @@ Serviços disponíveis:
 | Serviço   | URL / porta          | Observações                                        |
 | --------- | -------------------- | -------------------------------------------------- |
 | `web`     | http://localhost:8000 | API Django + admin                                 |
-| `frontend`| http://localhost:3000 | SPA (em scaffold)                                   |
+| `frontend`| http://localhost:3000 | SPA React                                          |
 | `db`      | localhost:5432       | PostgreSQL 16 + pgvector (`memorai:memorai`)      |
 | `redis`   | localhost:6379      | cache + broker Celery                              |
+
+### Produção
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+```
+
+Usa `memorai.settings.prod` (gunicorn, whitenoise, HTTPS/HSTS) e serve a SPA via nginx, que faz proxy de `/api`, `/admin` e `/backend-static` para o backend. Defina `DJANGO_SECRET_KEY`, `ALLOWED_HOSTS` e `CORS_ALLOWED_ORIGINS` no `.env`.
 
 ### Backend localmente (sem Docker)
 
@@ -140,21 +150,12 @@ Para rodar a fila de IA (opcional): `celery -A memorai worker -l info`.
 
 ```bash
 cd backend && pytest
-# ou, dentro do container:
-docker compose exec web pytest
+cd frontend && npm test -- --watchAll=false
 ```
 
 ## Roadmap
 
-Detalhado em [`ROADMAP.md`](ROADMAP.md). Resumo das sprints:
-
-- **Sprint 0 — Fundação** ✅ — backend modular, requirements, docker-compose, settings por ambiente.
-- **Sprint 1 — SRS** — campos SRS em `Card`, tabela `Review`, scheduler FSRS, endpoint `/cards/{id}/review/`.
-- **Sprint 2 — Núcleo de IA** — app `ai/` com `orchestrator`, `llm_client`, flow de feedback, prompts versionados, `AIEvent`, rate-limit.
-- **Sprint 3 — RAG** — embeddings + pgvector + flow de busca semântica.
-- **Sprint 4 — Analytics assíncrono** — Celery jobs de relatório e sugestões de revisão.
-- **Sprint 5 — Frontend** — router, telas (Review, Report, Login), conexão com endpoints de IA/SRS.
-- **Sprint 6 — AnkiConnect** — `flashcards/services/anki.py` + sincronização opcional.
+Concluído e próximos passos em [`ROADMAP.md`](ROADMAP.md). Em resumo: SRS, núcleo de IA, RAG, analytics assíncrono, frontend e geração de cards estão prontos; seguem importação/exportação Anki, busca semântica na UI, FSRS completo e gamificação.
 
 ## Documentação
 
@@ -168,7 +169,7 @@ Detalhado em [`ROADMAP.md`](ROADMAP.md). Resumo das sprints:
 
 ## Como contribuir
 
-Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) (a preencher) e [`docs/SDD.md`](docs/SDD.md) antes de tocar em arquitetura. Em especial:
+Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`docs/SDD.md`](docs/SDD.md) antes de tocar em arquitetura. Em especial:
 
 - A IA é **app Django isolada** (`backend/apps/ai/`); toda chamada externa passa por `orchestrator` e `llm_client`. Não introduzir dependências de LLM em outras apps.
 - Prompts vivem em `ai/prompts/*.yaml` versionados; nunca strings literais em views.
