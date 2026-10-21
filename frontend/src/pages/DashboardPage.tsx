@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Layers,
   Plus,
@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CreateDeckDialog } from "@/components/deck/create-deck-dialog";
 import { decksApi, type Deck } from "@/api/decks";
-import { cardsApi } from "@/api/cards";
+import { dashboardApi, type DashboardStats, type DeckStats } from "@/api/dashboard";
 
 /**
  * DashboardPage — Design System MemorAI §§2, 6, 8, 10, 11
@@ -38,17 +38,17 @@ export default function DashboardPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dueCount, setDueCount] = useState<number>(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [data, due] = await Promise.all([
+        const [data, summary] = await Promise.all([
           decksApi.list(),
-          cardsApi.due().catch(() => [] as never[]),
+          dashboardApi.get().catch(() => null),
         ]);
         setDecks(data);
-        setDueCount((due as unknown[]).length);
+        setStats(summary);
       } catch (err) {
         console.error("Erro ao buscar os decks:", err);
         setError("Não foi possível carregar seus decks.");
@@ -63,12 +63,15 @@ export default function DashboardPage() {
     setDecks((prev) => [deck, ...prev]);
   }
 
-  const totalCards = useMemo(
-    () => decks.reduce((sum, d) => sum + (d.cards?.length ?? 0), 0),
-    [decks]
+  const dueCount = stats?.due_count ?? 0;
+  const totalCards =
+    stats?.total_cards ?? decks.reduce((sum, d) => sum + (d.cards?.length ?? 0), 0);
+  const reviewedToday = stats?.reviewed_today ?? 0;
+  const streak = stats?.streak_days ?? 0;
+  const deckStats = useMemo(
+    () => new Map(stats?.decks.map((d) => [d.id, d]) ?? []),
+    [stats]
   );
-  const reviewedToday = 12;
-  const streak = 7;
 
   const today = useMemo(
     () =>
@@ -105,7 +108,7 @@ export default function DashboardPage() {
         <MetricCard
           icon={<Flame className="size-4 stroke-2 text-warning" />}
           label="Sequência"
-          value={`${streak} dias`}
+          value={`${streak} ${streak === 1 ? "dia" : "dias"}`}
         />
         <MetricCard
           icon={<CheckCircle2 className="size-4 stroke-2" />}
@@ -184,7 +187,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {decks.map((deck) => (
-              <DeckCard key={deck.id} deck={deck} />
+              <DeckCard key={deck.id} deck={deck} stats={deckStats.get(deck.id)} />
             ))}
           </div>
         )}
@@ -217,10 +220,11 @@ function MetricCard({
   );
 }
 
-function DeckCard({ deck }: { deck: Deck }) {
-  const total = deck.cards?.length ?? 0;
-  const due = 0; // TODO: trocar por /cards/due/ quando o endpoint existir
-  const progress = total > 0 ? 100 : 0; // TODO: derivar de reviews feitas
+function DeckCard({ deck, stats }: { deck: Deck; stats?: DeckStats }) {
+  const total = stats?.total_cards ?? deck.cards?.length ?? 0;
+  const due = stats?.due_count ?? 0;
+  const progress = total > 0 ? Math.round(((stats?.learned_cards ?? 0) / total) * 100) : 0;
+  const navigate = useNavigate();
 
   return (
     <Card className="group relative transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5">
@@ -235,7 +239,11 @@ function DeckCard({ deck }: { deck: Deck }) {
             <Badge variant="success">em dia</Badge>
           )}
         </div>
-        <CardTitle className="text-base">{deck.name}</CardTitle>
+        <CardTitle className="text-base">
+          <Link to={`/decks/${deck.id}`} className="after:absolute after:inset-0 hover:underline">
+            {deck.name}
+          </Link>
+        </CardTitle>
         {deck.description ? (
           <CardDescription className="line-clamp-2">
             {deck.description}
@@ -254,9 +262,10 @@ function DeckCard({ deck }: { deck: Deck }) {
         <Button
           variant={due > 0 ? "default" : "outline"}
           size="sm"
-          className="w-full"
+          className="relative z-10 w-full"
+          onClick={() => navigate(due > 0 ? "/review" : `/decks/${deck.id}`)}
         >
-          {due > 0 ? "Revisar agora" : "Praticar"}
+          {due > 0 ? "Revisar agora" : "Abrir deck"}
         </Button>
       </CardContent>
     </Card>
