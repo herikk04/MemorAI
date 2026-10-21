@@ -73,7 +73,28 @@ export interface GenerateCardsResponse {
   cards: GeneratedCard[];
 }
 
+export interface SearchHit {
+  card_id: number;
+  front: string;
+  back: string;
+  deck_id: number;
+  deck_name: string;
+  score: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  status: string;
+  hits: SearchHit[];
+}
+
 export const aiApi = {
+  /** POST /ai/search/: busca semântica nos cards do usuário. */
+  async search(query: string, topK = 8): Promise<SearchResponse> {
+    const { data } = await api.post<SearchResponse>("/ai/search/", { query, top_k: topK });
+    return data;
+  },
+
   /** POST /ai/generate-cards/: propõe cards; quem salva é o cliente via /cards/. */
   async generateCards(input: GenerateCardsInput): Promise<GenerateCardsResponse> {
     const { data } = await api.post<GenerateCardsResponse>("/ai/generate-cards/", input);

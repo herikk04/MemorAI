@@ -18,6 +18,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { tokenService } from "@/lib/token-service";
 import { authApi } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
+import { SearchDialog } from "@/components/layout/search-dialog";
 
 /**
  * AppShell — Design System MemorAI §8
@@ -60,6 +61,18 @@ export function AppShell({
 }) {
   const user = tokenService.getUser();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   async function handleLogout() {
     await authApi.logout();
@@ -127,14 +140,15 @@ export function AppShell({
               </NavLink>
             </div>
 
-            {/* Busca inline em desktop (§8) — TODO: integrar com /ai/search/ */}
+            {/* Busca semântica (/ai/search/), atalho Ctrl/Cmd+K */}
             <div className="hidden flex-1 lg:block">
               <button
                 type="button"
+                onClick={() => setSearchOpen(true)}
                 className="flex h-9 w-full max-w-xs items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 <Search className="size-4 stroke-2" />
-                <span>Buscar decks...</span>
+                <span>Buscar cards...</span>
                 <span className="ml-auto rounded border border-border px-1.5 py-0.5 text-[10px] leading-none">
                   ⌘K
                 </span>
@@ -147,6 +161,7 @@ export function AppShell({
           </header>
 
           {/* Main (§8: px-4 py-6 lg:px-8 lg:py-8) */}
+          <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
           <main className={cn("flex-1 px-4 py-6 lg:px-8 lg:py-8", className)}>
             {children}
           </main>
