@@ -35,4 +35,17 @@ module.exports = {
 
     return config;
   },
+
+  jest: function (config) {
+    // Alias @/* e libs ESM (axios) que o Jest do CRA não transforma sozinho.
+    config.moduleNameMapper = {
+      ...config.moduleNameMapper,
+      "^@/(.*)$": "<rootDir>/src/$1",
+    };
+    config.transformIgnorePatterns = [
+      "/node_modules/(?!(axios)/)",
+      "^.+\.module\.(css|sass|scss)$",
+    ];
+    return config;
+  },
 };
