@@ -3,6 +3,10 @@ from .base import *  # noqa: F401,F403
 
 DEBUG = False
 
+# Distinct prefix so the SPA host can proxy it without clashing with the
+# frontend bundle served under /static/.
+STATIC_URL = "/backend-static/"
+
 # Serve admin/DRF static files from gunicorn without a separate web server.
 MIDDLEWARE.insert(  # noqa: F405
     MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1,  # noqa: F405

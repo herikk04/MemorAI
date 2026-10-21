@@ -1,0 +1,28 @@
+# Produção: docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+# Requer um .env com DJANGO_SECRET_KEY, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS e a chave do provedor LLM.
+services:
+  web:
+    environment:
+      DJANGO_SETTINGS_MODULE: memorai.settings.prod
+      DJANGO_DEBUG: "False"
+      # TLS termina no proxy da frente; ajuste para True se o web receber HTTPS direto.
+      SECURE_SSL_REDIRECT: "False"
+    volumes: []
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn memorai.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"
+
+  worker:
+    environment:
+      DJANGO_SETTINGS_MODULE: memorai.settings.prod
+    volumes: []
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    environment: {}
+    volumes: []
+    ports:
+      - "80:80"
