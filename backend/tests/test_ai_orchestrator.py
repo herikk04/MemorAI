@@ -87,7 +87,7 @@ class TestQuotas:
 
     @pytest.mark.django_db
     def test_authenticated_quota_exceeded_when_usage_at_cap(self):
-        import datetime as _dt
+        from django.utils import timezone
         from decimal import Decimal
 
         User = get_user_model()
@@ -96,7 +96,7 @@ class TestQuotas:
         # Burn the full token cap on today.
         AIUsage.objects.create(
             user=u,
-            day=_dt.date.today(),
+            day=timezone.localdate(),
             tokens_in=caps["tokens"],
             tokens_out=0,
             cost_usd=Decimal("0"),

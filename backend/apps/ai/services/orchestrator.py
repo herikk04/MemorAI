@@ -12,14 +12,16 @@ Celery in Sprint 4) only this module changes.
 """
 from __future__ import annotations
 
-import datetime as _dt
 import importlib
 import logging
+import time
 from decimal import Decimal
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import F
+from django.utils import timezone
 
 from ..models import AIEvent, AIUsage
 
@@ -59,6 +61,7 @@ def _record_event(
     status: str,
     error: str,
     user,
+    latency_ms: int = 0,
 ) -> AIEvent:
     """Persist an AIEvent and roll up into AIUsage (quotas).
 
@@ -79,7 +82,7 @@ def _record_event(
         tokens_in=tokens_in,
         tokens_out=tokens_out,
         cost_usd=cost,
-        latency_ms=0,  # filled by a wrapper when added in Sprint 4
+        latency_ms=latency_ms,
         status=status,
         error=error,
     )
@@ -89,27 +92,33 @@ def _record_event(
     return event
 
 
+def elapsed_ms(started: float) -> int:
+    """Milliseconds since ``started`` (a time.monotonic() reading)."""
+    return int((time.monotonic() - started) * 1000)
+
+
 def _bump_usage(user, tokens_in: int, tokens_out: int, cost: Decimal) -> None:
-    day = _dt.date.today()  # matches quota_remaining's day selection
+    day = timezone.localdate()  # matches quota_remaining's day selection
     usage, _ = AIUsage.objects.get_or_create(user=user, day=day)
-    usage.tokens_in += tokens_in
-    usage.tokens_out += tokens_out
-    usage.cost_usd += cost
-    usage.calls += 1
-    usage.save()
+    # Atomic in-DB increment: concurrent requests must not lose counts.
+    AIUsage.objects.filter(pk=usage.pk).update(
+        tokens_in=F("tokens_in") + tokens_in,
+        tokens_out=F("tokens_out") + tokens_out,
+        cost_usd=F("cost_usd") + cost,
+        calls=F("calls") + 1,
+    )
 
 
 def quota_remaining(user) -> dict[str, float]:
     """Returns remaining tokens and cost for the current day (for middleware).
 
-    Uses datetime.date.today() consistently with the AIUsage `day` field; we
-    avoid mixing timezone.now().date() because tests and prod-locally
-    running AIUsage rows use local date, and the quota rolls per calendar
-    day from the user perspective.
+    Uses timezone.localdate() (settings.TIME_ZONE) for the AIUsage `day`
+    field everywhere, so the quota rolls per calendar day independently of
+    the server's system timezone.
     """
     if user is None or not user.is_authenticated:
         return {"tokens": float("inf"), "cost_usd": float("inf")}
-    day = _dt.date.today()
+    day = timezone.localdate()
     try:
         usage = AIUsage.objects.get(user=user, day=day)
     except AIUsage.DoesNotExist:

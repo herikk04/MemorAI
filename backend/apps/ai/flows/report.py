@@ -12,6 +12,7 @@ never sees a broken report.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,7 +22,7 @@ from django.db.models import Avg, Count, Max, Sum
 from ..clients import LLMResponse, Message, get_llm_client
 from ..models import AIEvent
 from ..prompts.loader import load_prompt
-from ..services.orchestrator import _record_event
+from ..services.orchestrator import _record_event, elapsed_ms
 
 logger = logging.getLogger("apps.ai.flows.report")
 
@@ -127,6 +128,7 @@ def run_report(payload: dict[str, Any], *, language: str = "pt", user=None) -> R
     }
     loaded = load_prompt("report", language, prompt_payload)
 
+    started = time.monotonic()
     try:
         client = get_llm_client()
         llm_resp: LLMResponse = client.complete(
@@ -156,6 +158,7 @@ def run_report(payload: dict[str, Any], *, language: str = "pt", user=None) -> R
         status=status,
         error=error,
         user=user_obj,
+        latency_ms=elapsed_ms(started),
     )
 
     return ReportResult(

@@ -1,7 +1,7 @@
 """Tests for the AI quota middleware (Sprint 2 - 7/7)."""
 from __future__ import annotations
 
-import datetime as _dt
+from django.utils import timezone
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -40,7 +40,7 @@ class FeedbackQuotaMiddlewareTests(APITestCase):
         # Burn the full token cap today so the middleware blocks.
         AIUsage.objects.create(
             user=u,
-            day=_dt.date.today(),
+            day=timezone.localdate(),
             tokens_in=caps["tokens"],
             tokens_out=0,
             cost_usd=Decimal("0"),
@@ -59,7 +59,7 @@ class FeedbackQuotaMiddlewareTests(APITestCase):
         # Burn the full cost cap today.
         AIUsage.objects.create(
             user=u,
-            day=_dt.date.today(),
+            day=timezone.localdate(),
             tokens_in=0,
             tokens_out=0,
             cost_usd=Decimal(str(caps["cost_usd"])),

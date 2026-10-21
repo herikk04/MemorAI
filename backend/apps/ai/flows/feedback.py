@@ -7,11 +7,13 @@ calls this via run_flow("feedback", payload).
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
 from ..clients import LLMResponse, Message, get_llm_client
 from ..models import AIEvent
+from ..services.orchestrator import elapsed_ms
 from ..prompts.loader import load_prompt
 
 logger = logging.getLogger("apps.ai.flows.feedback")
@@ -106,6 +108,7 @@ def run_feedback(
         prompt_payload = {**prompt_payload, **safe_payload}
         loaded = load_prompt("feedback", language, prompt_payload)
 
+    started = time.monotonic()
     try:
         client = get_llm_client()
         llm_resp: LLMResponse = client.complete(
@@ -131,6 +134,7 @@ def run_feedback(
             status=status,
             error=str(exc)[:256],
             user=user,
+            latency_ms=elapsed_ms(started),
         )
         return FeedbackResult(
             text=text,
@@ -155,6 +159,7 @@ def run_feedback(
         status=status,
         error="",
         user=user,
+        latency_ms=elapsed_ms(started),
     )
 
     return FeedbackResult(
