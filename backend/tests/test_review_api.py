@@ -129,3 +129,10 @@ class DueEndpointTests(APITestCase):
         resp = self.client.get("/api/v1/cards/due/")
         ids = [c["id"] for c in resp.data]
         self.assertNotIn(other_card.id, ids)
+
+    def test_due_includes_new_cards_never_reviewed(self):
+        new_card = Card.objects.create(deck=self.deck, front="n", back="m")
+        self.assertIsNone(new_card.due)
+        resp = self.client.get("/api/v1/cards/due/")
+        ids = [c["id"] for c in resp.data]
+        self.assertIn(new_card.id, ids)

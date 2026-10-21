@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -145,9 +146,9 @@ class CardViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="due")
     def due(self, request):
-        """GET /api/v1/cards/due/ — cards whose next review is now overdue."""
+        """GET /api/v1/cards/due/ — new cards (never reviewed) and overdue ones."""
         now = timezone.now()
-        cards = self.get_queryset().filter(due__lte=now)
+        cards = self.get_queryset().filter(Q(due__isnull=True) | Q(due__lte=now))
         page = self.paginate_queryset(cards)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
