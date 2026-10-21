@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Loader2,
@@ -90,6 +90,12 @@ export default function ReviewPage() {
   }, []);
 
   const currentCard = queue[currentIndex];
+
+  // Tempo de resposta: conta desde que o card aparece até o usuário avaliar.
+  const shownAt = useRef(Date.now());
+  useEffect(() => {
+    shownAt.current = Date.now();
+  }, [currentIndex, queue]);
   const progress = useMemo(
     () =>
       queue.length === 0
@@ -105,12 +111,11 @@ export default function ReviewPage() {
   async function rate(rating: ReviewRating) {
     if (!currentCard || submitting) return;
     setSubmitting(true);
-    const startedAt = Date.now();
     try {
       const result = await cardsApi.review(
         currentCard.id,
         rating,
-        Date.now() - startedAt
+        Date.now() - shownAt.current
       );
       setLastFeedback(result.review.feedback_text);
       setFeedbackSource(result.review.feedback_source);
