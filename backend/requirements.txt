@@ -30,6 +30,10 @@ anthropic==0.34.2
 # Vector store (pgvector) — used from Sprint 3
 pgvector==0.3.5
 
+# Production serving
+gunicorn==23.0.0
+whitenoise==6.7.0
+
 # Observability
 structlog==24.4.0
 

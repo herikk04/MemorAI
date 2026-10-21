@@ -34,3 +34,4 @@ docs/SESSION.md
 # Saidas de processos locais
 stdout.txt
 stderr.txt
+backend/staticfiles/
