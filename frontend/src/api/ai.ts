@@ -52,7 +52,34 @@ function isReport(payload: unknown): payload is ReportResponse {
   );
 }
 
+export interface GeneratedCard {
+  front: string;
+  back: string;
+}
+
+export interface GenerateCardsInput {
+  topic: string;
+  count?: number;
+  source_text?: string;
+  language?: "pt" | "en";
+}
+
+export interface GenerateCardsResponse {
+  /** "success" ou "fallback" (modelo falhou: cards vem vazio). */
+  status: string;
+  model: string;
+  provider: string;
+  prompt_version: string;
+  cards: GeneratedCard[];
+}
+
 export const aiApi = {
+  /** POST /ai/generate-cards/: propõe cards; quem salva é o cliente via /cards/. */
+  async generateCards(input: GenerateCardsInput): Promise<GenerateCardsResponse> {
+    const { data } = await api.post<GenerateCardsResponse>("/ai/generate-cards/", input);
+    return data;
+  },
+
   /** GET /ai/report/ — dispara relatório assíncrono (ou recebe pronto em dev). */
   async startReport(language: "pt" | "en" = "pt"): Promise<ReportResponse | TaskAcknowledgment> {
     const { data, status } = await api.get("/ai/report/", {

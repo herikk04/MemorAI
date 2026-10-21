@@ -41,6 +41,9 @@ module.exports = {
     config.moduleNameMapper = {
       ...config.moduleNameMapper,
       "^@/(.*)$": "<rootDir>/src/$1",
+      // Jest 27 (CRA) não resolve subpath exports do Radix.
+      "^@radix-ui/primitive/is-development$":
+        "<rootDir>/node_modules/@radix-ui/primitive/dist/internal/is-development.true.js",
     };
     config.transformIgnorePatterns = [
       "/node_modules/(?!(axios)/)",

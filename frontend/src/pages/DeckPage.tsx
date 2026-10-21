@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { decksApi, type Deck } from "@/api/decks";
 import { cardsApi, type Card } from "@/api/cards";
+import { GenerateCardsDialog } from "@/components/deck/generate-cards-dialog";
 
 /**
  * DeckPage — detalhe de um deck (/decks/:deckId).
@@ -152,6 +153,10 @@ export default function DeckPage() {
             <Flame className="size-4 stroke-2" />
             Revisar
           </Button>
+          <GenerateCardsDialog
+            deckId={deck.id}
+            onCreated={(created) => created.forEach(handleCardCreated)}
+          />
           <CreateCardDialog deckId={deck.id} onCreated={handleCardCreated} />
         </div>
       </div>
