@@ -67,7 +67,7 @@ services:
       - ./backend:/app
     depends_on:
       - web
-    command: celery -A memorai worker -l info
+    command: celery -A memorai worker -l info -Q ai,celery
 
   frontend:
     build:
