@@ -49,3 +49,12 @@ class TestPromptLoader:
         assert "Tempo gasto: 0 ms" in p.user
         assert "Repeticoes anteriores: 0" in p.user
         assert "Lapsos: 0" in p.user
+
+
+def test_feedback_fallback_follows_language_and_rating():
+    from apps.ai.flows.feedback import _fallback
+
+    assert "lapso" in _fallback({"rating": 1}, "pt")
+    assert "lapsed" in _fallback({"rating": 1}, "en")
+    assert "reforço" in _fallback({"rating": 2})
+    assert "dominou" in _fallback({"rating": 4})

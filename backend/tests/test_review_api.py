@@ -164,3 +164,20 @@ class CardCreateOwnershipTests(APITestCase):
         card = Card.objects.create(deck=self.mine, front="f", back="b")
         resp = self.client.patch(f"/api/v1/cards/{card.id}/", {"deck": self.theirs.id})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewLanguageTests(APITestCase):
+    def test_review_uses_profile_language(self):
+        from unittest import mock
+
+        from apps.users.models import Profile
+
+        user = get_user_model().objects.create_user(username="en", password="pw1234567")
+        Profile.objects.create(user=user, language="en")
+        deck = Deck.objects.create(name="d", owner=user)
+        card = Card.objects.create(deck=deck, front="f", back="b")
+        self.client.force_authenticate(user)
+        with mock.patch("apps.ai.services.orchestrator.run_flow") as run_flow:
+            run_flow.return_value = mock.Mock(text="ok", status="success")
+            self.client.post(_url(card.id), {"rating": Review.Rating.GOOD})
+        self.assertEqual(run_flow.call_args.kwargs["language"], "en")

@@ -20,6 +20,12 @@ from .services.stats import dashboard_stats
 logger = logging.getLogger("flashcards.review")
 
 
+def _user_language(user) -> str:
+    """Preferred language from the user's Profile (defaults to pt)."""
+    profile = getattr(user, "profile", None)
+    return profile.language if profile is not None else "pt"
+
+
 class DeckViewSet(viewsets.ModelViewSet):
     """CRUD for decks, scoped by owner (Sprint 1.5).
 
@@ -117,7 +123,7 @@ class CardViewSet(viewsets.ModelViewSet):
                     "reps": update.reps,
                     "lapses": update.lapses,
                 },
-                language="pt",
+                language=_user_language(request.user),
                 user=request.user,
             )
             feedback_text = result.text

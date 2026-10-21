@@ -31,24 +31,35 @@ class FeedbackResult:
     cost_usd: float
 
 
-def _fallback(payload: dict[str, Any]) -> str:
+_FALLBACK_TAILS = {
+    "pt": {
+        "lapse": "Revise este card com mais frequência; ele entrou em lapso.",
+        "hard": "Bom reforço: vale repetir logo para fixar.",
+        "ok": "Você dominou este card; pode espaçar as revisões.",
+    },
+    "en": {
+        "lapse": "Review this card more often; it has lapsed.",
+        "hard": "Good reinforcement: worth repeating soon to make it stick.",
+        "ok": "You have mastered this card; reviews can be spaced out.",
+    },
+}
+
+
+def _fallback(payload: dict[str, Any], language: str = "pt") -> str:
     """Deterministic fallback when the LLM is unavailable.
 
     Per the SDD (sec 3.2): the AI never blocks the UX. We produce a short,
     rule-based explanation so the review endpoint still returns something
     useful even if OPENAI_API_KEY is empty or the provider times out.
     """
+    tails = _FALLBACK_TAILS.get(language, _FALLBACK_TAILS["pt"])
     rating = payload.get("rating")
-    label = RATING_LABELS.get(rating, "review")
-    front = payload.get("front", "")
     lapses = int(payload.get("lapses", 0) or 0)
     if rating == 1 or lapses > 2:
-        tail = "Revise este card com mais frequencia; ele entrou em lapso."
-    elif rating == 2:
-        tail = "Bom reforco: vale repetir logo para fixar."
-    else:
-        tail = "Voce dominou este card; pode espacar as revisoes."
-    return f"[heuristic:{label}] {front[:80]} ... {tail}"
+        return tails["lapse"]
+    if rating == 2:
+        return tails["hard"]
+    return tails["ok"]
 
 
 def run_feedback(
@@ -105,7 +116,7 @@ def run_feedback(
         )
     except Exception as exc:  # noqa: BLE001  (we want broad fallback here)
         logger.warning("feedback flow fell back to heuristic: %s", exc)
-        text = _fallback(prompt_payload)
+        text = _fallback({**prompt_payload, "rating": rating}, language)
         status = (
             AIEvent.Status.FALLBACK if isinstance(exc, Exception) else AIEvent.Status.ERROR
         )
@@ -147,7 +158,7 @@ def run_feedback(
     )
 
     return FeedbackResult(
-        text=llm_resp.content or _fallback(prompt_payload),
+        text=llm_resp.content or _fallback({**prompt_payload, "rating": rating}, language),
         tokens_in=llm_resp.tokens_in,
         tokens_out=llm_resp.tokens_out,
         model=llm_resp.model,
