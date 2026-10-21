@@ -136,3 +136,31 @@ class DueEndpointTests(APITestCase):
         resp = self.client.get("/api/v1/cards/due/")
         ids = [c["id"] for c in resp.data]
         self.assertIn(new_card.id, ids)
+
+
+class CardCreateOwnershipTests(APITestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username="a", password="pw1234567")
+        self.other = User.objects.create_user(username="b", password="pw1234567")
+        self.mine = Deck.objects.create(name="mine", owner=self.user)
+        self.theirs = Deck.objects.create(name="theirs", owner=self.other)
+        self.client.force_authenticate(self.user)
+
+    def test_create_card_in_own_deck(self):
+        resp = self.client.post(
+            "/api/v1/cards/", {"deck": self.mine.id, "front": "f", "back": "b"}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_create_card_in_foreign_deck_rejected(self):
+        resp = self.client.post(
+            "/api/v1/cards/", {"deck": self.theirs.id, "front": "f", "back": "b"}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Card.objects.filter(deck=self.theirs).exists())
+
+    def test_move_card_to_foreign_deck_rejected(self):
+        card = Card.objects.create(deck=self.mine, front="f", back="b")
+        resp = self.client.patch(f"/api/v1/cards/{card.id}/", {"deck": self.theirs.id})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
