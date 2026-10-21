@@ -1,6 +1,7 @@
 """Auth URL surface: /api/v1/auth/{login,refresh,verify}/.
 
 Permissions:
+    register-> AllowAny (creates the account and returns a token pair)
     login   -> AllowAny (anyone with valid credentials gets a token)
     refresh -> AllowAny (token itself is the proof; rotation + blacklist
                 protects the rotation chain)
@@ -12,9 +13,10 @@ REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] (see settings/base.py).
 from django.urls import path
 from rest_framework.permissions import AllowAny
 
-from .views import LoginView, RefreshView, VerifyView
+from .views import LoginView, RefreshView, RegisterView, VerifyView
 
 urlpatterns = [
+    path("register/", RegisterView.as_view(), name="register"),
     path("login/", LoginView.as_view(permission_classes=[AllowAny]), name="login"),
     path("refresh/", RefreshView.as_view(permission_classes=[AllowAny]), name="refresh"),
     path("verify/", VerifyView.as_view(permission_classes=[AllowAny]), name="verify"),
