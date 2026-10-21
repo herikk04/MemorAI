@@ -19,6 +19,8 @@ from .middleware import enforce_ai_quota
 from .serializers import (
     FeedbackRequestSerializer,
     FeedbackResponseSerializer,
+    GenerateCardsRequestSerializer,
+    GenerateCardsResponseSerializer,
     ReportResponseSerializer,
     SearchHitSerializer,
     SearchRequestSerializer,
@@ -47,6 +49,27 @@ class FeedbackView(APIView):
         )
         out_s = FeedbackResponseSerializer(result)
         return Response(out_s.data, status=status.HTTP_200_OK)
+
+
+class GenerateCardsView(APIView):
+    """POST /api/v1/ai/generate-cards/: propose flashcards for a topic.
+
+    Returns proposals only; the client saves the ones the learner keeps via
+    POST /api/v1/cards/. An empty ``cards`` list with a non-success status
+    means the model failed and the UI should offer a retry.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @enforce_ai_quota
+    def post(self, request):
+        in_s = GenerateCardsRequestSerializer(data=request.data)
+        in_s.is_valid(raise_exception=True)
+        data = in_s.validated_data
+        language = data.pop("language")
+
+        result = run_flow("generate_cards", data, language=language, user=request.user)
+        return Response(GenerateCardsResponseSerializer(result).data, status=status.HTTP_200_OK)
 
 
 class SearchView(APIView):

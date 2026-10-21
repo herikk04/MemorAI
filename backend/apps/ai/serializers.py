@@ -28,6 +28,29 @@ class FeedbackResponseSerializer(serializers.Serializer):
     cost_usd = serializers.FloatField()
 
 
+class GenerateCardsRequestSerializer(serializers.Serializer):
+    """Input contract for POST /api/v1/ai/generate-cards/."""
+    topic = serializers.CharField(max_length=200)
+    source_text = serializers.CharField(
+        max_length=8000, required=False, allow_blank=True, default=""
+    )
+    count = serializers.IntegerField(min_value=1, max_value=10, default=5)
+    language = serializers.ChoiceField(choices=["pt", "en"], default="pt")
+
+
+class GeneratedCardSerializer(serializers.Serializer):
+    front = serializers.CharField()
+    back = serializers.CharField()
+
+
+class GenerateCardsResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    model = serializers.CharField()
+    provider = serializers.CharField()
+    prompt_version = serializers.CharField()
+    cards = GeneratedCardSerializer(many=True)
+
+
 class SearchRequestSerializer(serializers.Serializer):
     """Input contract for POST /api/v1/ai/search/."""
     query = serializers.CharField(required=True)

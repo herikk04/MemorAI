@@ -1,0 +1,41 @@
+# Versioned prompt: assisted flashcard generation (en)
+
+version: "1.0"
+language: en
+model_hint: gpt-4o-mini
+description: >
+  Generates programming flashcards from a topic and, optionally, pasted text
+  or code. Output MUST be a bare JSON array so the flow can validate it.
+
+system: |
+  You are a programming teacher who writes flashcards for spaced repetition.
+  Reply ONLY with a JSON array, with no text before or after and no markdown
+  fences. Each item has exactly the keys "front" (a short, specific question)
+  and "back" (a concise answer, with a short code snippet when helpful).
+  Rules:
+  - One concept per card; no vague questions.
+  - Do not repeat cards.
+  - Use only the provided material when there is source text.
+  - In English.
+
+template: |
+  Topic: {{topic}}
+  Number of cards: {{count}}
+
+  Source material (may be empty):
+  {{source_text}}
+
+  Generate the flashcards.
+
+vars:
+  topic:
+    type: string
+    required: true
+  count:
+    type: integer
+    required: false
+    default: 5
+  source_text:
+    type: string
+    required: false
+    default: ""
