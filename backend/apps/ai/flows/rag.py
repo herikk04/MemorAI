@@ -101,6 +101,17 @@ def run_rag(payload: dict[str, Any], *, language: str = "pt", user=None) -> RagR
             error=str(exc)[:256],
         )
 
+    # Scope the search to cards the requester may see, so one user's cards
+    # never surface in another user's results (staff sees everything).
+    from flashcards.models import Card
+
+    visible = Card.objects.all()
+    if not getattr(user, "is_staff", False):
+        if user is None or not getattr(user, "is_authenticated", False):
+            visible = visible.none()
+        else:
+            visible = visible.filter(deck__owner=user)
+
     try:
         store = get_vector_store()
         hits = store.search_similar(
@@ -108,6 +119,7 @@ def run_rag(payload: dict[str, Any], *, language: str = "pt", user=None) -> RagR
             entity_type="card",
             top_k=top_k,
             model=emb.model,
+            entity_ids=visible.values_list("id", flat=True),
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("rag search failed: %s", exc)

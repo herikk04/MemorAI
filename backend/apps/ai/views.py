@@ -10,6 +10,7 @@ settings/base.py); the request.user passed to the flows is always
 authenticated, so the anonymous branches inside the flows are kept
 only for parity with internal/async callers (Celery tasks).
 """
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -27,6 +28,16 @@ from .serializers import (
     TaskResultSerializer,
 )
 from .services.orchestrator import run_flow
+
+_TASK_OWNER_TTL = 24 * 3600
+
+
+def _remember_task_owner(task_id: str, user) -> None:
+    cache.set(f"ai:task-owner:{task_id}", user.id, timeout=_TASK_OWNER_TTL)
+
+
+def _owns_task(task_id: str, user) -> bool:
+    return cache.get(f"ai:task-owner:{task_id}") == user.id
 
 
 class FeedbackView(APIView):
@@ -98,6 +109,7 @@ class ReportView(APIView):
         language = request.query_params.get("language", "pt")
 
         task = generate_report_task.delay(request.user.id, language)
+        _remember_task_owner(task.id, request.user)
         if not task.successful():
             out_s = TaskResultSerializer(
                 {"task_id": task.id, "status": task.status}
@@ -125,6 +137,7 @@ class SuggestionView(APIView):
         top_k = in_s.validated_data["top_k"]
 
         task = generate_suggestions_task.delay(request.user.id, top_k)
+        _remember_task_owner(task.id, request.user)
         if not task.successful():
             out_s = TaskResultSerializer(
                 {"task_id": task.id, "status": task.status}
@@ -142,6 +155,12 @@ class TaskResultView(APIView):
 
     def get(self, request, task_id):
         from .tasks import generate_report_task, generate_suggestions_task
+
+        # Unknown and foreign task ids look identical (404) so ids can't be probed.
+        if not _owns_task(task_id, request.user):
+            return Response(
+                {"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         async_result = generate_report_task.AsyncResult(task_id)
         if async_result.successful():

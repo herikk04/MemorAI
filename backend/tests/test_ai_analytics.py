@@ -18,6 +18,7 @@ from apps.ai.flows.report import run_report
 from apps.ai.flows.review_suggestion import run_review_suggestion
 from apps.ai.models import AIEvent
 from apps.ai.tasks import generate_report_task, generate_suggestions_task
+from apps.ai.views import _remember_task_owner
 from flashcards.models import Card, Deck, Review
 
 
@@ -214,17 +215,17 @@ class TestAnalyticsEndpoints:
         Review.objects.create(card=card, user=user, rating=3)
         client.force_authenticate(user)
         task = generate_report_task.delay(user.id, "pt")
+        _remember_task_owner(task.id, user)  # what the report view does on dispatch
         resp = client.get(f"/api/v1/ai/tasks/{task.id}/")
         assert resp.status_code == status.HTTP_200_OK
         body = resp.json()
         assert body["result"]["metrics"]["total_reviews"] == 1
 
     @pytest.mark.django_db
-    def test_unknown_task_id_returns_pending(self, user, client):
+    def test_unknown_task_id_returns_404(self, user, client):
         client.force_authenticate(user)
         resp = client.get("/api/v1/ai/tasks/00000000-0000-0000-0000-000000000000/")
-        assert resp.status_code == status.HTTP_202_ACCEPTED
-        assert resp.json()["status"] in ("PENDING", "FAILURE")
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.django_db
     def test_unauthenticated_task_result_returns_401(self, client):

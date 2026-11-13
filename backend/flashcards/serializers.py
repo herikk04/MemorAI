@@ -29,6 +29,16 @@ class CardSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["interval", "ease", "reps", "lapses", "due", "last_reviewed_at"]
 
+    def validate_deck(self, deck):
+        """A card can only be placed in a deck the requester owns (staff: any)."""
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated:
+            raise serializers.ValidationError("Authentication required.")
+        if not user.is_staff and deck.owner_id != user.id:
+            raise serializers.ValidationError("Invalid deck.")
+        return deck
+
 
 class DeckSerializer(serializers.ModelSerializer):
     cards = CardSerializer(many=True, read_only=True)

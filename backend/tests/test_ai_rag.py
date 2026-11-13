@@ -64,10 +64,11 @@ class TestReindexService:
 class TestRunRagFlow:
     @pytest.mark.django_db
     def test_happy_path_returns_hits(self):
-        deck = Deck.objects.create(name="Python")
+        user = get_user_model().objects.create_user(username="rag", password="pw1234567")
+        deck = Deck.objects.create(name="Python", owner=user)
         Card.objects.create(deck=deck, front="iterar dict python", back="for k, v in d.items()")
         Card.objects.create(deck=deck, front="criar lista python", back="[]")
-        result = run_flow("rag", {"query": "como iterar dicionario python"}, user=None)
+        result = run_flow("rag", {"query": "como iterar dicionario python"}, user=user)
         assert result.status == "success"
         assert result.provider == "mock"
         assert len(result.hits) >= 1
@@ -105,7 +106,7 @@ class TestSearchEndpoint(APITestCase):
 
     @pytest.mark.django_db
     def test_happy_path(self):
-        deck = Deck.objects.create(name="Python")
+        deck = Deck.objects.create(name="Python", owner=self.user)
         Card.objects.create(deck=deck, front="iterar dict python", back="for k, v in d.items()")
         resp = self.client.post(
             self.url,

@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -49,9 +50,12 @@ class CardViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Card.objects.all()
-        if self.request.user.is_staff:
-            return qs
-        return qs.filter(deck__owner=self.request.user)
+        if not self.request.user.is_staff:
+            qs = qs.filter(deck__owner=self.request.user)
+        deck_id = self.request.query_params.get("deck")
+        if deck_id is not None and deck_id.isdigit():
+            qs = qs.filter(deck_id=int(deck_id))
+        return qs
 
     @action(detail=True, methods=["post"], url_path="review")
     def review(self, request, pk=None):
@@ -145,9 +149,15 @@ class CardViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="due")
     def due(self, request):
-        """GET /api/v1/cards/due/ — cards whose next review is now overdue."""
+        """GET /api/v1/cards/due/ — cards whose next review is now overdue.
+
+        Cards never reviewed have ``due=NULL`` and count as due, otherwise
+        new cards would never enter the review queue.
+        """
         now = timezone.now()
-        cards = self.get_queryset().filter(due__lte=now)
+        cards = self.get_queryset().filter(
+            Q(due__isnull=True) | Q(due__lte=now)
+        ).order_by(F("due").asc(nulls_first=True), "id")
         page = self.paginate_queryset(cards)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

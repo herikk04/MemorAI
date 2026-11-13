@@ -17,6 +17,15 @@ def _on_card_saved(sender, instance, created, **kwargs):
     # Skip fixture/loaddata raw imports to keep embedding cost off data loads.
     if kwargs.get("raw"):
         return
+    # SRS-only saves (e.g. a review uses update_fields=[interval, due, ...])
+    # don't change the embedded text; skip the paid embedding call.
+    update_fields = kwargs.get("update_fields")
+    if (
+        not created
+        and update_fields is not None
+        and not {"front", "back"} & set(update_fields)
+    ):
+        return
     reindex_card(instance)
 
 

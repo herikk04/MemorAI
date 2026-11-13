@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Iterable, Protocol
 
 from django.db import connection
 
@@ -55,6 +55,7 @@ class VectorStore(Protocol):
         top_k: int = 5,
         model: str | None = None,
         version: str | None = None,
+        entity_ids: Iterable[int] | None = None,
     ) -> list[SimilarityHit]: ...
 
     def delete(self, *, entity_type: str, entity_id: int) -> int: ...
@@ -112,6 +113,7 @@ class InMemoryVectorStore:
         top_k: int = 5,
         model: str | None = None,
         version: str | None = None,
+        entity_ids: Iterable[int] | None = None,
     ) -> list[SimilarityHit]:
         qs = Embedding.objects.all()
         if entity_type is not None:
@@ -120,6 +122,8 @@ class InMemoryVectorStore:
             qs = qs.filter(model=model)
         if version is not None:
             qs = qs.filter(version=version)
+        if entity_ids is not None:
+            qs = qs.filter(entity_id__in=list(entity_ids))
         scored: list[SimilarityHit] = []
         for row in qs:
             stored = row.vector or []
@@ -179,6 +183,7 @@ class PgVectorStore:
         top_k: int = 5,
         model: str | None = None,
         version: str | None = None,
+        entity_ids: Iterable[int] | None = None,
     ) -> list[SimilarityHit]:
         from pgvector.django import CosineDistance
 
@@ -189,6 +194,8 @@ class PgVectorStore:
             qs = qs.filter(model=model)
         if version is not None:
             qs = qs.filter(version=version)
+        if entity_ids is not None:
+            qs = qs.filter(entity_id__in=list(entity_ids))
         qs = qs.annotate(distance=CosineDistance("vector", query_vector))
         qs = qs.order_by("distance")[:top_k]
         hits: list[SimilarityHit] = []
@@ -198,8 +205,9 @@ class PgVectorStore:
                 SimilarityHit(
                     entity_type=row.entity_type,
                     entity_id=row.entity_id,
-                    # If distance column is missing (e.g. NULL vector), treat as 0.
-                    score=1.0 - float(getattr(row, "distance", 1.0) or 1.0),
+                    # NULL distance (missing vector) scores as the worst match;
+                    # a real distance of 0.0 is a perfect match (score 1.0).
+                    score=1.0 - (1.0 if row.distance is None else float(row.distance)),
                     embedding_id=row.id,
                 )
             )
