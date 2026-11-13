@@ -40,8 +40,10 @@ async function tryRefresh(): Promise<string | null> {
       { timeout: 15_000 }
     );
     const next = response.data?.access as string | undefined;
+    // O backend rotaciona o refresh e invalida o anterior: guardar o novo.
+    const nextRefresh = response.data?.refresh as string | undefined;
     if (next) {
-      sessionStorage.setItem("memorai-access", next);
+      tokenService.setTokens(next, nextRefresh);
       return next;
     }
     return null;

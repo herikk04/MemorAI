@@ -56,6 +56,11 @@ export const tokenService = {
       } as AuthUser)
     );
   },
+  /** Guarda tokens renovados; o refresh só muda quando o backend rotaciona. */
+  setTokens(access: string, refresh?: string): void {
+    sessionStorage.setItem(ACCESS_KEY, access);
+    if (refresh) sessionStorage.setItem(REFRESH_KEY, refresh);
+  },
   clear(): void {
     sessionStorage.removeItem(ACCESS_KEY);
     sessionStorage.removeItem(REFRESH_KEY);
